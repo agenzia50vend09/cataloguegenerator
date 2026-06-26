@@ -284,15 +284,30 @@ class CatalogApp {
 
     // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
     generateCatalogPDF() {
-        // Salva temporaneamente la vista corrente per poterla ripristinare alla fine
-        const previousView = this.currentView;
+        // Apri un nuovo pannello/scheda vuoto nel browser
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Il blocco pop-up del browser ha impedito l'apertura del catalogo.");
+            return;
+        }
 
-        // Crea una vista temporanea personalizzata o forza il rendering completo di tutti i prodotti
-        const container = document.getElementById('main-content');
-        if (!container) return;
+        // Gestione sicura del CSS per evitare blocchi CORS che svuotano la pagina
+        let stilicss = "";
+        try {
+            stilicss = Array.from(document.styleSheets)
+                .map(styleSheet => {
+                    try { 
+                        return Array.from(styleSheet.cssRules || styleSheet.rules).map(rule => rule.cssText).join('\n'); 
+                    } catch (e) { 
+                        return ''; // Salta i fogli di stile cross-origin protetti senza rompere il codice
+                    }
+                }).join('\n');
+        } catch (e) {
+            console.warn("Impossibile leggere alcuni stili CSS dinamici:", e);
+        }
 
-        container.innerHTML = ''; 
-
+        // Generiamo l'HTML con tutti i prodotti (versione estesa senza slice)
+        let catalogoHTML = '';
         const ordinaPerNovita = (lista) => {
             return [...lista].sort((a, b) => {
                 const aNovita = String(a.novita) === 'true' ? 1 : 0;
@@ -301,69 +316,107 @@ class CatalogApp {
             });
         };
 
-        // Genera la sezione Novità se presente
+        // 1. Sezione Novità
         const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
         if (novitaProducts.length > 0) {
-            container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
-            container.appendChild(this.createGrid(novitaProducts));
+            catalogoHTML += `<h2 class="section-title">✨ Novità In Evidenza</h2>`;
+            catalogoHTML += `<div class="grid-products">`;
+            novitaProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+            catalogoHTML += `</div>`;
         }
 
-        // Estrae tutti i brand e per ciascuno mostra TUTTI i prodotti (senza il .slice(0, 3))
+        // 2. Sezione per ogni Brand (Tutti i prodotti del brand)
         const brands = [...new Set(this.products.map(p => p.brand))];
         brands.forEach(brand => {
             const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand); // Rimosso il .slice(0, 3)
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);
             
-            const headingEl = document.createElement('h2');
-            headingEl.className = 'section-title';
-            headingEl.innerHTML = `<span class="brand-title">${brand}</span>`;
-            
-            container.appendChild(headingEl);
-            container.appendChild(this.createGrid(brandProducts));
+            catalogoHTML += `<h2 class="section-title"><span class="brand-title">${brand}</span></h2>`;
+            catalogoHTML += `<div class="grid-products">`;
+            brandProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+            catalogoHTML += `</div>`;
         });
 
-        // Apri la finestra di stampa e cattura l'HTML completo appena generato
-        const printWindow = window.open('', '_blank');
-        const catalogoHTML = container.innerHTML;
-        const stilicss = Array.from(document.styleSheets)
-            .map(styleSheet => {
-                try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
-                catch (e) { return ''; }
-            }).join('\n');
-
+        // Scriviamo il documento nel nuovo pannello SENZA chiamare window.print()
         printWindow.document.write(`
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Sweets - Catalogo Prodotti PDF</title>
+                <title>Sweets - Catalogo Prodotti</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
+                    /* Stili CSS strutturali di riserva per garantire la griglia anche se lo style.css fallisce il CORS */
+                    :root {
+                        --primary-blue: #0056b3; --dark-blue: #002d62; --light-blue: #e6f0fa;
+                        --accent-blue: #0088cc; --white: #ffffff; --gray-bg: #f8f9fa;
+                        --gray-text: #4a5568; --border-color: #dbe2ef; --danger-red: #dc3545; --success-green: #28a745;
+                    }
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 40px; color: var(--dark-blue); }
+                    .container { width: 90%; max-width: 1200px; margin: 0 auto; }
+                    .section-title { font-size: 28px; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid var(--light-blue); margin-top: 40px; }
+                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; margin-bottom: 50px; }
+                    .product-card { background-color: var(--white); border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid var(--border-color); page-break-inside: avoid; break-inside: avoid; }
+                    .badge-novita { position: absolute; top: 15px; left: 15px; background-color: var(--accent-blue); color: var(--white); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 2; }
+                    .product-img-container { height: 180px; background-color: #fff; display: flex; align-items: center; justify-content: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
+                    .product-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                    .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+                    .product-brand { font-size: 12px; text-transform: uppercase; color: var(--accent-blue); font-weight: 700; margin-bottom: 5px; }
+                    .product-name { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+                    .product-desc { font-size: 14px; color: var(--gray-text); margin-bottom: 15px; flex-grow: 1; }
+                    .product-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: var(--gray-bg); padding: 8px 12px; border-radius: 6px; margin-bottom: 15px; }
+                    .product-price { font-size: 22px; font-weight: 700; color: var(--primary-blue); }
+                    .out-of-stock { opacity: 0.6; }
+                    
                     ${stilicss}
-                    body { background: white; padding: 20px; }
-                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; }
-                    @media print { .product-card { page-break-inside: avoid; } }
+                    
+                    @media screen {
+                        body { max-width: 1100px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); background: white; }
+                    }
                 </style>
             </head>
             <body>
-                <header style="background: #002d62; color: white; padding: 20px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
-                    <h1>SWEETS</h1>
-                    <p>Catalogo Prodotti Ufficiale</p>
+                <header style="background: #002d62; color: white; padding: 30px; text-align: center; margin-bottom: 20px; border-radius: 6px;">
+                    <h1 style="font-size: 36px; margin: 0; letter-spacing: 1px;">SWEETS</h1>
+                    <p style="margin: 5px 0 0 0; opacity: 0.9;">Catalogo Prodotti Ufficiale</p>
                 </header>
-                ${catalogoHTML}
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(() => { window.close(); }, 500);
-                    };
-                <\/script>
+                <div class="container">
+                    ${catalogoHTML}
+                </div>
             </body>
             </html>
         `);
         printWindow.document.close();
+    }
 
-        // Ripristina la vista precedente dell'applicazione sullo schermo dell'utente
-        this.currentView = previousView;
-        this.render();
+    // Funzione helper integrata nella classe per generare la card in totale sicurezza
+    generareCardHTMLPerPDF(prod) {
+        const isDisponibile = String(prod.disponibile) === 'true';
+        const isNovita = String(prod.novita) === 'true';
+        const photoUrl = this.getPhotoUrl(prod.foto);
+
+        return `
+            <div class="product-card ${!isDisponibile ? 'out-of-stock' : ''}">
+                ${isNovita ? '<div class="badge-novita">Novità</div>' : ''}
+                <div class="product-img-container">
+                    <img src="${photoUrl}" alt="${prod.nome}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
+                </div>
+                <div class="product-info">
+                    <div class="product-brand">${prod.brand}</div>
+                    <div class="product-name">${prod.nome}</div>
+                    <div class="product-desc">${prod.descrizione}</div>
+                    <div class="product-meta">
+                        <span><i class="fa-solid fa-boxes-stacked"></i> ${prod.packtype}</span>
+                        <span>🏷️ ${prod.type}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="product-price">${parseFloat(prod.prezzo || 0).toFixed(2)}€</span>
+                        <span style="font-size:12px; font-weight:bold; color:${isDisponibile ? 'var(--success-green)' : 'var(--danger-red)'}">
+                            ${isDisponibile ? 'Disponibile' : 'Esaurito'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     // --- LOGICA PANNELLO ADMIN ---
