@@ -284,30 +284,21 @@ class CatalogApp {
 
     // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
     generateCatalogPDF() {
-        // Apri un nuovo pannello/scheda vuoto nel browser
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            alert("Il blocco pop-up del browser ha impedito l'apertura del catalogo.");
-            return;
-        }
+        // 1. Creiamo un contenitore temporaneo nascosto per calcolare il catalogo continuo
+        const elementoEsportazione = document.createElement('div');
+        elementoEsportazione.style.width = '1024px'; // Larghezza fissa standard per un'ottima resa visiva
+        elementoEsportazione.style.padding = '30px';
+        elementoEsportazione.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        elementoEsportazione.style.backgroundColor = '#f8f9fa';
+        elementoEsportazione.style.color = '#002d62';
+        
+        let catalogoHTML = `
+            <div style="background: #002d62; color: white; padding: 35px; text-align: center; margin-bottom: 30px; border-radius: 8px;">
+                <h1 style="margin: 0; font-size: 38px; letter-spacing: 2px;">SWEETS</h1>
+                <p style="margin: 8px 0 0 0; opacity: 0.8; font-size: 16px;">Catalogo Prodotti Ufficiale — Scorrimento Continuo</p>
+            </div>
+        `;
 
-        // Gestione sicura del CSS per evitare blocchi CORS
-        let stilicss = "";
-        try {
-            stilicss = Array.from(document.styleSheets)
-                .map(styleSheet => {
-                    try { 
-                        return Array.from(styleSheet.cssRules || styleSheet.rules).map(rule => rule.cssText).join('\n'); 
-                    } catch (e) { 
-                        return ''; 
-                    }
-                }).join('\n');
-        } catch (e) {
-            console.warn("Impossibile leggere alcuni stili CSS dinamici:", e);
-        }
-
-        // Generiamo l'HTML con tutti i prodotti (versione estesa senza slice)
-        let catalogoHTML = '';
         const ordinaPerNovita = (lista) => {
             return [...lista].sort((a, b) => {
                 const aNovita = String(a.novita) === 'true' ? 1 : 0;
@@ -316,109 +307,77 @@ class CatalogApp {
             });
         };
 
-        // 1. Sezione Novità
-        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
-        if (novitaProducts.length > 0) {
-            catalogoHTML += `<h2 class="section-title">✨ Novità In Evidenza</h2>`;
-            catalogoHTML += `<div class="grid-products">`;
-            novitaProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+        // Render Sezione Novità
+        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');[cite: 1]
+        if (novitaProducts.length > 0) {[cite: 1]
+            catalogoHTML += `<h2 style="font-size: 26px; margin: 30px 0 20px 0; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">✨ Novità In Evidenza</h2>`;[cite: 1, 2]
+            catalogoHTML += `<div style="display: flex; flex-wrap: wrap; gap: 20px; width: 100%;">`;[cite: 2]
+            novitaProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });[cite: 1]
             catalogoHTML += `</div>`;
         }
 
-        // 2. Sezione per ogni Brand (Tutti i prodotti del brand)
-        const brands = [...new Set(this.products.map(p => p.brand))];
-        brands.forEach(brand => {
-            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);
+        // Render Sezione Brand
+        const brands = [...new Set(this.products.map(p => p.brand))];[cite: 1]
+        brands.forEach(brand => {[cite: 1]
+            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);[cite: 1]
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);[cite: 1]
             
-            catalogoHTML += `<h2 class="section-title"><span class="brand-title">${brand}</span></h2>`;
-            catalogoHTML += `<div class="grid-products">`;
-            brandProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+            catalogoHTML += `<h2 style="font-size: 26px; margin: 40px 0 20px 0; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">${brand}</h2>`;[cite: 1, 2]
+            catalogoHTML += `<div style="display: flex; flex-wrap: wrap; gap: 20px; width: 100%;">`;[cite: 2]
+            brandProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });[cite: 1]
             catalogoHTML += `</div>`;
         });
 
-        // Scriviamo il documento nel nuovo pannello SENZA chiamare window.print()
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sweets - Catalogo Prodotti</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    :root {
-                        --primary-blue: #0056b3; --dark-blue: #002d62; --light-blue: #e6f0fa;
-                        --accent-blue: #0088cc; --white: #ffffff; --gray-bg: #f8f9fa;
-                        --gray-text: #4a5568; --border-color: #dbe2ef; --danger-red: #dc3545; --success-green: #28a745;
-                    }
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 30px; color: var(--dark-blue); }
-                    .container { width: 95%; max-width: 1200px; margin: 0 auto; }
-                    .section-title { font-size: 26px; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid var(--light-blue); margin-top: 30px; page-break-after: avoid; break-after: avoid; }
-                    
-                    /* Sistema multi-colonna alternativo a display:grid per prevenire la frammentazione dei riquadri */
-                    .grid-products { 
-                        display: block !important;
-                        column-count: 3 !important; 
-                        column-gap: 20px !important;
-                        margin-bottom: 30px; 
-                    }
-                    
-                    /* Regole tassative anti-taglio sui blocchi prodotto */
-                    .product-card { 
-                        display: inline-block !important; /* Forza il blocco a rimanere unito */
-                        width: 100%;
-                        margin-bottom: 20px;
-                        background-color: var(--white); 
-                        border-radius: 12px; 
-                        box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); 
-                        overflow: hidden; 
-                        position: relative; 
-                        border: 1px solid var(--border-color); 
-                        
-                        /* Proprietà standard e legacy per evitare divisioni sulle pagine A4 */
-                        page-break-inside: avoid !important; 
-                        break-inside: avoid !important; 
-                        break-inside: avoid-column !important;
-                    }
-                    
-                    .badge-novita { position: absolute; top: 15px; left: 15px; background-color: var(--accent-blue); color: var(--white); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 2; }
-                    .product-img-container { height: 160px; background-color: #fff; display: flex; align-items: center; justify-content: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
-                    .product-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
-                    .product-info { padding: 15px; display: flex; flex-direction: column; }
-                    .product-brand { font-size: 11px; text-transform: uppercase; color: var(--accent-blue); font-weight: 700; margin-bottom: 5px; }
-                    .product-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-                    .product-desc { font-size: 13px; color: var(--gray-text); margin-bottom: 12px; }
-                    .product-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; background: var(--gray-bg); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
-                    .product-price { font-size: 20px; font-weight: 700; color: var(--primary-blue); }
-                    .out-of-stock { opacity: 0.6; }
-                    
-                    ${stilicss}
-                    
-                    /* Ottimizzazione del foglio virtuale nello schermo */
-                    @media screen {
-                        body { max-width: 1024px; margin: 20px auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); background: white; border-radius: 8px; }
-                    }
-                    
-                    /* Ottimizzazione specifica in caso l'utente avvii la stampa A4 del browser manuale */
-                    @media print {
-                        body { padding: 0; background: white; }
-                        .container { width: 100%; }
-                        .product-card { box-shadow: none; border: 1px solid #cbd5e1; }
-                    }
-                </style>
-            </head>
-            <body>
-                <header style="background: #002d62; color: white; padding: 25px; text-align: center; margin-bottom: 20px; border-radius: 6px;">
-                    <h1 style="font-size: 32px; margin: 0; letter-spacing: 1px;">SWEETS</h1>
-                    <p style="margin: 5px 0 0 0; opacity: 0.9;">Catalogo Prodotti Ufficiale</p>
-                </header>
-                <div class="container">
-                    ${catalogoHTML}
-                </div>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        elementoEsportazione.innerHTML = catalogoHTML;
+        document.body.appendChild(elementoEsportazione); // Inserito temporaneamente nel DOM per il calcolo delle altezze
+
+        // 2. Funzione core per generare il PDF a pagina singola continua
+        const avviaGenerazioneContinuo = () => {
+            // Calcoliamo l'altezza effettiva del contenuto in pixel e la convertiamo in millimetri per il PDF
+            const altezzaPx = elementoEsportazione.scrollHeight;
+            const larghezzaMm = 210; // Manteniamo la larghezza standard di un A4 (210mm)
+            const altezzaMm = (altezzaPx * larghezzaMm) / 1024; // Proporzione esatta pixel->mm
+
+            const opzioni = {
+                margin:       0, // Zero margini per evitare stacchi
+                filename:     'Catalogo_Continuo_Sweets.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 1.5, useCORS: true, scrollY: 0 },
+                // Configurazione magica: passiamo l'altezza esatta calcolata dinamicamente come un unico foglio personalizzato
+                jsPDF:        { unit: 'mm', format: [larghezzaMm, altezzaMm], orientation: 'portrait' }
+            };
+
+            html2pdf().set(opzioni).from(elementoEsportazione).toPdf().get('pdf').then((pdf) => {
+                // Rimuoviamo il contenitore temporaneo dal DOM
+                document.body.removeChild(elementoEsportazione);
+                
+                // Creiamo l'oggetto Blob e apriamo l'anteprima continua in un nuovo pannello
+                const pdfBlob = pdf.output('blob');
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const nuovaFinestra = window.open(blobUrl, '_blank');
+                
+                if (!nuovaFinestra) {
+                    alert("Il blocco pop-up del browser ha impedito l'apertura dell'anteprima.");
+                }
+            }).catch((err) => {
+                console.error(err);
+                if (document.body.contains(elementoEsportazione)) document.body.removeChild(elementoEsportazione);
+                alert("Errore nella generazione del catalogo continuo.");
+            });
+        };
+
+        // 3. Controllo e caricamento dinamico della libreria html2pdf
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = avviaGenerazioneContinuo;
+            document.head.appendChild(script);
+        } else {
+            avviaGenerazioneContinuo();
+        }
     }
+
+    // Mantieni la funzione helper generareCardHTMLPerPDF(prod) creata in precedenza sotto questo metodo[cite: 1]
 
     // --- LOGICA PANNELLO ADMIN ---
     renderAdminTable() {
