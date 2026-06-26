@@ -6,22 +6,29 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" sizes="301x301" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <title>Sweets - Area Riservata</title>
+    <title>Sweets - Catalogo Prodotti</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Librerie per la generazione del PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
     <header>
         <div class="container header-container">
-            <div class="logo">
+            <div class="logo" onclick="app.renderCatalog()">
                 <span>Sweets</span>
             </div>
             <nav>
-                <!-- Rimossi i pulsanti catalogo utente, lasciato solo Admin -->
+                <div id="user-nav-controls" class="hidden">
+                    <button id="btn-view-all" onclick="app.viewAllProducts()">Tutti i Prodotti</button>
+                    <div class="dropdown">
+                        <button class="dropbtn">Categorie <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="dropdown-content" id="dropdown-type"></div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="dropbtn">Packaging <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="dropdown-content" id="dropdown-packtype"></div>
+                    </div>
+                </div>
                 <button id="btn-admin-gate" class="btn-outline" onclick="app.toggleAdminModal(true)">
                     <i class="fa-solid fa-lock"></i> Admin
                 </button>
@@ -29,13 +36,12 @@
         </div>
     </header>
 
-    <main class="container" id="main-content">
-        <!-- Questa sezione rimarrà vuota per l'utente non loggato -->
+    <main class="container hidden" id="main-content">
     </main>
 
     <div id="login-modal" class="modal">
         <div class="modal-content auth-card">
-            <span class="close-btn" onclick="app.toggleAdminModal(false)">&times;</span>
+            <span class="close-btn" onclick="app.toggleAdminModal(false)">×</span>
             <h2><i class="fa-solid fa-shield-halved"></i> Accesso Admin</h2>
             <form id="login-form" onsubmit="app.handleLogin(event)">
                 <div class="form-group">
@@ -58,7 +64,6 @@
                 <button class="btn-danger" onclick="app.handleLogout()">Logout</button>
             </div>
             
-            <!-- SEZIONE INSERIMENTO PRODOTTO -->
             <div class="card form-card">
                 <h3 id="form-title">Aggiungi Nuovo Prodotto</h3>
                 <form id="product-form" onsubmit="app.handleProductSubmit(event)">
@@ -125,23 +130,18 @@
                 </form>
             </div>
 
-            <!-- NUOVA SEZIONE: GENERAZIONE CATALOGO PDF ED INVIO WA -->
-            <div class="card pdf-card">
+            <div class="card export-card">
                 <h3>Esportazione e Condivisione Catalogo</h3>
-                <p style="margin-bottom: 15px; color: var(--gray-text); font-size: 14px;">
-                    Genera il catalogo in formato PDF strutturato con le novità in evidenza e i prodotti divisi per brand (con la novità come primo elemento). Potrai scaricarlo o inviarlo direttamente tramite WhatsApp al numero associato al tuo profilo.
-                </p>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <button type="button" class="btn-primary" style="background-color: var(--accent-blue);" onclick="app.generateAndSendPDF(false)">
-                        <i class="fa-solid fa-file-pdf"></i> Scarica PDF Catalogo
+                <div class="form-actions" style="margin-top: 15px; display: flex; gap: 15px;">
+                    <button type="button" class="btn-primary" onclick="app.generateCatalogPDF()">
+                        <i class="fa-solid fa-file-pdf"></i> Genera PDF Catalogo
                     </button>
-                    <button type="button" class="btn-primary" style="background-color: var(--success-green);" onclick="app.generateAndSendPDF(true)">
-                        <i class="fa-brands fa-whatsapp"></i> Invia Catalogo via WhatsApp
+                    <button type="button" class="btn-success" id="btn-whatsapp-send" onclick="app.sendCatalogWhatsApp()" style="background-color: var(--success-green); color: white;">
+                        <i class="fa-brands fa-whatsapp"></i> Invia via WhatsApp
                     </button>
                 </div>
             </div>
 
-            <!-- LISTA PRODOTTI DATABASE -->
             <div class="card table-card">
                 <h3>Lista Prodotti nel Database</h3>
                 <div class="table-responsive">
@@ -166,7 +166,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 SweetsCatalogue. Area Amministrativa Riservata.</p>
+            <p>© 2026 SweetsCatalogue. Tutti i diritti riservati.</p>
         </div>
     </footer>
 
