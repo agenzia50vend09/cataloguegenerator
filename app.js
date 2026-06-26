@@ -19,6 +19,7 @@ class CatalogApp {
 
         // Il controllo della sessione admin nasconderà o mostrerà il catalogo e la navbar utente
         this.checkAdminSession();
+        this.setupAdminEvents();
     }
 
     async loadDataFromSheets() {
@@ -57,6 +58,29 @@ class CatalogApp {
 
     isAdminActive() {
         return localStorage.getItem('isAdminSession') === 'true';
+    }
+
+    setupAdminEvents() {
+        // Aggancia l'evento al pulsante di autenticazione/pannello admin in totale sicurezza
+        const adminGateBtn = document.getElementById('btn-admin-gate');
+        if (adminGateBtn) {
+            adminGateBtn.onclick = (e) => {
+                e.preventDefault();
+                if (this.isAdminActive()) {
+                    // Se l'admin è attivo, scrolla fino al pannello o mostra un avviso
+                    const adminPanel = document.getElementById('admin-panel');
+                    if (adminPanel) adminPanel.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    this.toggleAdminModal(true);
+                }
+            };
+        }
+
+        // Aggancia l'evento al form di login
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.onsubmit = (e) => this.handleLogin(e);
+        }
     }
 
     checkAdminSession() {
@@ -282,16 +306,21 @@ class CatalogApp {
         return grid;
     }
 
-    // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
+    // --- FUNZIONALITÀ DI ESPORTAZIONE PDF CONTINUO ---
     generateCatalogPDF() {
-        // Salva temporaneamente la vista corrente per poterla ripristinare alla fine
-        const previousView = this.currentView;
-
-        // Crea una vista temporanea personalizzata o forza il rendering completo di tutti i prodotti
-        const container = document.getElementById('main-content');
-        if (!container) return;
-
-        container.innerHTML = ''; 
+        const elementoEsportazione = document.createElement('div');
+        elementoEsportazione.style.width = '1140px'; 
+        elementoEsportazione.style.padding = '30px';
+        elementoEsportazione.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        elementoEsportazione.style.backgroundColor = '#f8f9fa';
+        elementoEsportazione.style.color = '#002d62';
+        
+        let catalogoHTML = `
+            <div style="background: #002d62; color: white; padding: 35px; text-align: center; margin-bottom: 40px; border-radius: 12px; border-bottom: 3px solid #0088cc;">
+                <h1 style="margin: 0; font-size: 42px; font-weight: 800; letter-spacing: 1px;">SWEETS</h1>
+                <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 16px; font-weight: 600;">Catalogo Prodotti Ufficiale</p>
+            </div>
+        `;
 
         const ordinaPerNovita = (lista) => {
             return [...lista].sort((a, b) => {
@@ -301,69 +330,96 @@ class CatalogApp {
             });
         };
 
-        // Genera la sezione Novità se presente
         const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
         if (novitaProducts.length > 0) {
-            container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
-            container.appendChild(this.createGrid(novitaProducts));
+            catalogoHTML += `<h2 style="font-size: 28px; color: #002d62; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">✨ Novità In Evidenza</h2>`;
+            catalogoHTML += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px;">`;
+            novitaProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+            catalogoHTML += `</div>`;
         }
 
-        // Estrae tutti i brand e per ciascuno mostra TUTTI i prodotti (senza il .slice(0, 3))
         const brands = [...new Set(this.products.map(p => p.brand))];
         brands.forEach(brand => {
             const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand); // Rimosso il .slice(0, 3)
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);
             
-            const headingEl = document.createElement('h2');
-            headingEl.className = 'section-title';
-            headingEl.innerHTML = `<span class="brand-title">${brand}</span>`;
-            
-            container.appendChild(headingEl);
-            container.appendChild(this.createGrid(brandProducts));
+            catalogoHTML += `<h2 style="font-size: 28px; color: #002d62; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">${brand} »</h2>`;
+            catalogoHTML += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px;">`;
+            brandProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });
+            catalogoHTML += `</div>`;
         });
 
-        // Apri la finestra di stampa e cattura l'HTML completo appena generato
-        const printWindow = window.open('', '_blank');
-        const catalogoHTML = container.innerHTML;
-        const stilicss = Array.from(document.styleSheets)
-            .map(styleSheet => {
-                try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
-                catch (e) { return ''; }
-            }).join('\n');
+        elementoEsportazione.innerHTML = catalogoHTML;
+        document.body.appendChild(elementoEsportazione);
 
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sweets - Catalogo Prodotti PDF</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    ${stilicss}
-                    body { background: white; padding: 20px; }
-                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; }
-                    @media print { .product-card { page-break-inside: avoid; } }
-                </style>
-            </head>
-            <body>
-                <header style="background: #002d62; color: white; padding: 20px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
-                    <h1>SWEETS</h1>
-                    <p>Catalogo Prodotti Ufficiale</p>
-                </header>
-                ${catalogoHTML}
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(() => { window.close(); }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        const avviaGenerazioneContinuo = () => {
+            const altezzaPx = elementoEsportazione.scrollHeight;
+            const larghezzaMm = 210; 
+            const altezzaMm = (altezzaPx * larghezzaMm) / 1140; 
 
-        // Ripristina la vista precedente dell'applicazione sullo schermo dell'utente
-        this.currentView = previousView;
-        this.render();
+            const opzioni = {
+                margin:       0,
+                filename:     'Catalogo_Sweets.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 1.5, useCORS: true, scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: [larghezzaMm, altezzaMm], orientation: 'portrait' }
+            };
+
+            html2pdf().set(opzioni).from(elementoEsportazione).toPdf().get('pdf').then((pdf) => {
+                document.body.removeChild(elementoEsportazione);
+                
+                const pdfBlob = pdf.output('blob');
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const nuovaFinestra = window.open(blobUrl, '_blank');
+                
+                if (!nuovaFinestra) {
+                    alert("Il blocco pop-up del browser ha impedito l'apertura dell'anteprima.");
+                }
+            }).catch((err) => {
+                console.error(err);
+                if (document.body.contains(elementoEsportazione)) document.body.removeChild(elementoEsportazione);
+                alert("Errore nella generazione del catalogo.");
+            });
+        };
+
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = avviaGenerazioneContinuo;
+            document.head.appendChild(script);
+        } else {
+            avviaGenerazioneContinuo();
+        }
+    }
+
+    generareCardHTMLPerPDF(prod) {
+        const isDisponibile = String(prod.disponibile) === 'true';
+        const isNovita = String(prod.novita) === 'true';
+        const photoUrl = this.getPhotoUrl(prod.foto);
+
+        return `
+            <div style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid #dbe2ef; ${!isDisponibile ? 'opacity: 0.6;' : ''}">
+                ${isNovita ? '<div style="position: absolute; top: 15px; left: 15px; background-color: #0088cc; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 2;">Novità</div>' : ''}
+                <div style="height: 200px; background-color: #ffffff; display: flex; align-items: center; justify-content: center; padding: 15px;">
+                    <img src="${photoUrl}" alt="${prod.nome}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3EFoto non disponibile%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1;">
+                    <div style="font-size: 12px; text-transform: uppercase; color: #0088cc; font-weight: 700; margin-bottom: 5px;">${prod.brand}</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #002d62;">${prod.nome}</div>
+                    <div style="font-size: 14px; color: #4a5568; margin-bottom: 15px; flex-grow: 1; min-height: 42px;">${prod.descrizione}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin-bottom: 15px; color: #002d62;">
+                        <span><i class="fa-solid fa-boxes-stacked"></i> ${prod.packtype}</span>
+                        <span>🏷️ ${prod.type}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 22px; font-weight: 700; color: ${isDisponibile ? '#0056b3' : '#6c757d'};">${parseFloat(prod.prezzo || 0).toFixed(2)}€</span>
+                        <span style="font-size: 12px; font-weight: bold; color: ${isDisponibile ? '#28a745' : '#dc3545'}">
+                            ${isDisponibile ? 'Disponibile' : 'Esaurito'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     // --- LOGICA PANNELLO ADMIN ---
