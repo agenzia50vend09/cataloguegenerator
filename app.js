@@ -286,16 +286,16 @@ class CatalogApp {
     generateCatalogPDF() {
         // 1. Creiamo un contenitore temporaneo nascosto per calcolare il catalogo continuo
         const elementoEsportazione = document.createElement('div');
-        elementoEsportazione.style.width = '1024px'; // Larghezza fissa standard per un'ottima resa visiva
+        elementoEsportazione.style.width = '1140px'; // Larghezza ideale per simulare il desktop della web app
         elementoEsportazione.style.padding = '30px';
         elementoEsportazione.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         elementoEsportazione.style.backgroundColor = '#f8f9fa';
         elementoEsportazione.style.color = '#002d62';
         
         let catalogoHTML = `
-            <div style="background: #002d62; color: white; padding: 35px; text-align: center; margin-bottom: 30px; border-radius: 8px;">
-                <h1 style="margin: 0; font-size: 38px; letter-spacing: 2px;">SWEETS</h1>
-                <p style="margin: 8px 0 0 0; opacity: 0.8; font-size: 16px;">Catalogo Prodotti Ufficiale — Scorrimento Continuo</p>
+            <div style="background: #002d62; color: white; padding: 35px; text-align: center; margin-bottom: 40px; border-radius: 12px; border-bottom: 3px solid #0088cc;">
+                <h1 style="margin: 0; font-size: 42px; font-weight: 800; letter-spacing: 1px;">SWEETS</h1>
+                <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 16px; font-weight: 600;">Catalogo Prodotti Ufficiale</p>
             </div>
         `;
 
@@ -307,51 +307,47 @@ class CatalogApp {
             });
         };
 
-        // Render Sezione Novità
+        // Render Sezione Novità[cite: 1]
         const novitaProducts = this.products.filter(p => String(p.novita) === 'true');[cite: 1]
         if (novitaProducts.length > 0) {[cite: 1]
-            catalogoHTML += `<h2 style="font-size: 26px; margin: 30px 0 20px 0; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">✨ Novità In Evidenza</h2>`;[cite: 1, 2]
-            catalogoHTML += `<div style="display: flex; flex-wrap: wrap; gap: 20px; width: 100%;">`;[cite: 2]
+            catalogoHTML += `<h2 style="font-size: 28px; color: #002d62; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">✨ Novità In Evidenza</h2>`;[cite: 1, 2]
+            catalogoHTML += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px;">`;[cite: 1, 2]
             novitaProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });[cite: 1]
             catalogoHTML += `</div>`;
         }
 
-        // Render Sezione Brand
+        // Render Sezione Brand[cite: 1]
         const brands = [...new Set(this.products.map(p => p.brand))];[cite: 1]
         brands.forEach(brand => {[cite: 1]
             const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);[cite: 1]
             const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);[cite: 1]
             
-            catalogoHTML += `<h2 style="font-size: 26px; margin: 40px 0 20px 0; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">${brand}</h2>`;[cite: 1, 2]
-            catalogoHTML += `<div style="display: flex; flex-wrap: wrap; gap: 20px; width: 100%;">`;[cite: 2]
+            catalogoHTML += `<h2 style="font-size: 28px; color: #002d62; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid #e6f0fa;">${brand} »</h2>`;[cite: 1, 2]
+            catalogoHTML += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px;">`;[cite: 1, 2]
             brandProducts.forEach(prod => { catalogoHTML += this.generareCardHTMLPerPDF(prod); });[cite: 1]
             catalogoHTML += `</div>`;
         });
 
         elementoEsportazione.innerHTML = catalogoHTML;
-        document.body.appendChild(elementoEsportazione); // Inserito temporaneamente nel DOM per il calcolo delle altezze
+        document.body.appendChild(elementoEsportazione); // Inserito temporaneamente nel DOM per elaborare l'altezza
 
-        // 2. Funzione core per generare il PDF a pagina singola continua
+        // 2. Funzione core per generare il PDF continuo
         const avviaGenerazioneContinuo = () => {
-            // Calcoliamo l'altezza effettiva del contenuto in pixel e la convertiamo in millimetri per il PDF
             const altezzaPx = elementoEsportazione.scrollHeight;
-            const larghezzaMm = 210; // Manteniamo la larghezza standard di un A4 (210mm)
-            const altezzaMm = (altezzaPx * larghezzaMm) / 1024; // Proporzione esatta pixel->mm
+            const larghezzaMm = 210; // Manteniamo la proporzione rispetto ai 210mm di larghezza standard
+            const altezzaMm = (altezzaPx * larghezzaMm) / 1140; 
 
             const opzioni = {
-                margin:       0, // Zero margini per evitare stacchi
-                filename:     'Catalogo_Continuo_Sweets.pdf',
+                margin:       0,
+                filename:     'Catalogo_Sweets.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 1.5, useCORS: true, scrollY: 0 },
-                // Configurazione magica: passiamo l'altezza esatta calcolata dinamicamente come un unico foglio personalizzato
                 jsPDF:        { unit: 'mm', format: [larghezzaMm, altezzaMm], orientation: 'portrait' }
             };
 
             html2pdf().set(opzioni).from(elementoEsportazione).toPdf().get('pdf').then((pdf) => {
-                // Rimuoviamo il contenitore temporaneo dal DOM
-                document.body.removeChild(elementoEsportazione);
+                document.body.removeChild(elementoEsportazione); // Pulizia DOM
                 
-                // Creiamo l'oggetto Blob e apriamo l'anteprima continua in un nuovo pannello
                 const pdfBlob = pdf.output('blob');
                 const blobUrl = URL.createObjectURL(pdfBlob);
                 const nuovaFinestra = window.open(blobUrl, '_blank');
@@ -366,7 +362,6 @@ class CatalogApp {
             });
         };
 
-        // 3. Controllo e caricamento dinamico della libreria html2pdf
         if (typeof html2pdf === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -375,6 +370,37 @@ class CatalogApp {
         } else {
             avviaGenerazioneContinuo();
         }
+    }
+
+    // 3. Ripristino esatto del layout grafico delle card quadrate (da style.css.txt)
+    generareCardHTMLPerPDF(prod) {
+        const isDisponibile = String(prod.disponibile) === 'true';[cite: 1]
+        const isNovita = String(prod.novita) === 'true';[cite: 1]
+        const photoUrl = this.getPhotoUrl(prod.foto);[cite: 1]
+
+        return `
+            <div style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid #dbe2ef; ${!isDisponibile ? 'opacity: 0.6;' : ''}">
+                ${isNovita ? '<div style="position: absolute; top: 15px; left: 15px; background-color: #0088cc; color: #ffffff; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 2;">Novità</div>' : ''}[cite: 1, 2]
+                <div style="height: 200px; background-color: #ffffff; display: flex; align-items: center; justify-content: center; padding: 15px;">[cite: 1, 2]
+                    <img src="${photoUrl}" alt="${prod.nome}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3EFoto non disponibile%3C/text%3E%3C/svg%3E'">[cite: 1, 2]
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1;">[cite: 1, 2]
+                    <div style="font-size: 12px; text-transform: uppercase; color: #0088cc; font-weight: 700; margin-bottom: 5px;">${prod.brand}</div>[cite: 1, 2]
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #002d62;">${prod.nome}</div>[cite: 1, 2]
+                    <div style="font-size: 14px; color: #4a5568; margin-bottom: 15px; flex-grow: 1; min-height: 42px;">${prod.descrizione}</div>[cite: 1, 2]
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin-bottom: 15px; color: #002d62;">[cite: 1, 2]
+                        <span><i class="fa-solid fa-boxes-stacked"></i> ${prod.packtype}</span>[cite: 1]
+                        <span>🏷️ ${prod.type}</span>[cite: 1]
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">[cite: 1]
+                        <span style="font-size: 22px; font-weight: 700; color: ${isDisponibile ? '#0056b3' : '#6c757d'};">${parseFloat(prod.prezzo || 0).toFixed(2)}€</span>[cite: 1, 2]
+                        <span style="font-size: 12px; font-weight: bold; color: ${isDisponibile ? '#28a745' : '#dc3545'}">
+                            ${isDisponibile ? 'Disponibile' : 'Esaurito'}[cite: 1]
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     // Mantieni la funzione helper generareCardHTMLPerPDF(prod) creata in precedenza sotto questo metodo[cite: 1]
