@@ -1,0 +1,513 @@
+/* --- VARIABILI DESIGN (Palette Bianco e Blu) --- */
+:root {
+    --primary-blue: #0056b3;
+    --dark-blue: #002d62;
+    --light-blue: #e6f0fa;
+    --accent-blue: #0088cc;
+    --white: #ffffff;
+    --gray-bg: #f8f9fa;
+    --gray-text: #4a5568;
+    --border-color: #dbe2ef;
+    --danger-red: #dc3545;
+    --success-green: #28a745;
+    --shadow: 0 4px 15px rgba(0, 92, 179, 0.08);
+    --transition: all 0.3s ease;
+}
+
+/* --- RESET & LAYOUT BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--gray-bg);
+    color: var(--dark-blue);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+main {
+    flex: 1;
+    padding: 40px 0;
+}
+
+.hidden { display: none !important; }
+
+/* --- HEADER & NAVIGATION --- */
+header {
+    /* Il gradiente sopra serve a scurire la foto per leggere i testi bianchi. 
+       Cambia l'URL dopo la virgola con la tua foto preferita */
+    background-image: linear-gradient(rgba(0, 45, 98, 0.6), rgba(0, 45, 98, 0.75)), 
+                      url('https://media.engage.it/2020/2/perfetti_van_melle_gara_media_87137.jpg') !important;
+    
+    /* Forza il posizionamento e la copertura dell'immagine */
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    
+    /* Rimuove eventuali colori di sfondo solidi ereditati prima */
+    background-color: transparent !important; 
+    
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--accent-blue);
+padding: 45px 0 !important; /* Aumentato il padding sopra e sotto (prima era 10px/15px) */
+    min-height: 160px;          /* Garantisce un'altezza minima generosa e professionale */
+    display: flex;
+    align-items: center;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+/* Logo in bianco per risaltare sulla foto */
+.logo {
+    font-size: 45px;
+    font-weight: 800;
+    color: var(--white);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+nav {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Pulsanti */
+button {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: none;
+    transition: var(--transition);
+}
+
+/* Pulsanti di navigazione adattati allo sfondo scuro/fotografico */
+#btn-view-all, .dropbtn {
+    background-color: transparent;
+    color: var(--white);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+#btn-view-all:hover, .dropbtn:hover {
+    color: var(--white);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Pulsante Admin modificato per integrarsi con la nuova grafica */
+.btn-outline {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--white);
+    color: var(--white);
+    backdrop-filter: blur(3px);
+}
+
+.btn-outline:hover {
+    background-color: var(--white);
+    color: var(--primary-blue);
+    text-shadow: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+
+.btn-primary:hover { background-color: var(--dark-blue); }
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: var(--white);
+}
+
+.btn-danger {
+    background-color: var(--danger-red);
+    color: var(--white);
+}
+
+/* DROPDOWN MENU */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--white);
+    min-width: 160px;
+    box-shadow: var(--shadow);
+    border-radius: 6px;
+    overflow: hidden;
+    z-index: 1;
+    border: 1px solid var(--border-color);
+}
+
+.dropdown-content a {
+    color: var(--dark-blue);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    text-transform: capitalize;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+}
+
+.dropdown:hover .dropdown-content { display: block; }
+
+/* --- CARD E SEZIONI CATALOGO --- */
+.section-title {
+    font-size: 28px;
+    color: var(--dark-blue);
+    margin-bottom: 25px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--light-blue);
+}
+
+.brand-title {
+    cursor: pointer;
+    display: inline-block;
+}
+
+.brand-title:hover {
+    color: var(--primary-blue);
+    text-decoration: underline;
+}
+
+.grid-products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.product-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-blue);
+}
+
+.badge-novita {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: var(--accent-blue);
+    color: var(--white);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+.product-img-container {
+    height: 200px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.product-img-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.product-info {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.product-brand {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.product-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.product-desc {
+    font-size: 14px;
+    color: var(--gray-text);
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    background: var(--gray-bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.product-price {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.out-of-stock {
+    opacity: 0.6;
+}
+.out-of-stock .product-price { color: #6c757d; }
+
+/* --- MODAL (LOGIN ADMIN) --- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 45, 98, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 28px; cursor: pointer;
+}
+
+/* --- SEZIONE GESTIONE ADMIN --- */
+.admin-section {
+    background-color: var(--light-blue);
+    padding: 40px 0;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+}
+
+/* Form Layout */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+input[type="text"], input[type="password"], input[type="number"], input[type="url"], select, textarea {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    font-size: 15px;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0,86,179,0.15);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.checkboxes {
+    display: flex;
+    gap: 30px;
+    margin: 15px 0;
+}
+
+.checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+/* Tabelle Admin */
+.table-responsive { overflow-x: auto; }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+th { background-color: var(--light-blue); font-weight: 600; }
+.admin-actions-btns { display: flex; gap: 10px; }
+
+/* --- FOOTER --- */
+footer {
+    background-color: var(--dark-blue);
+    color: var(--white);
+    text-align: center;
+    padding: 20px 0;
+    font-size: 14px;
+}
+
+/* --- OTTIMIZZAZIONE PER DISPOSITIVI MOBILI (SMARTPHONE - LAYOUT ORIZZONTALE) --- */
+@media (max-width: 768px) {
+    
+    header {
+        padding: 25px 0 !important; /* Padding bilanciato per il layout compatto */
+        height: auto !important;
+        position: relative !important;
+    }
+
+    .header-container {
+        flex-direction: column !important; /* Logo sopra, menu sotto */
+        gap: 15px;                         /* Spazio tra il logo e la riga dei pulsanti */
+        text-align: center;
+    }
+
+    .logo {
+        font-size: 45px !important;        /* Logo leggermente più piccolo per i telefoni */
+    }
+
+    nav {
+        flex-direction: row !important;    /* FORZA I PULSANTI IN ORIZZONTALE */
+        flex-wrap: wrap;                   /* Se lo schermo è stretto, i pulsanti vanno a capo da soli senza rompere il layout */
+        justify-content: center;           /* Centra i pulsanti orizzontalmente sotto il logo */
+        width: 100%;
+        gap: 8px;                          /* Spazio compatto tra i pulsanti sulla stessa riga */
+    }
+
+    /* Regoliamo la dimensione dei pulsanti su mobile per farli stare comodamente in riga */
+    #btn-view-all, 
+    .dropdown .dropbtn, 
+    #btn-admin-gate {
+        padding: 8px 12px !important;      /* Pulsanti leggermente più compatti */
+        font-size: 14px !important;        /* Testo leggermente più piccolo per ottimizzare lo spazio */
+        width: auto !important;            /* Impedisce ai pulsanti di allargarsi al 100% */
+    }
+
+    /* Gestione dei menu a tendina (Dropdown) su mobile */
+    .dropdown-content {
+        position: absolute !important;     /* Torna a fluttuare sopra il catalogo per non spingere giù tutto */
+        left: 50%;
+        transform: translateX(-50%);       /* Centra il quadratino del menu rispetto al suo pulsante */
+        min-width: 140px;
+        background-color: var(--white) !important; /* Sfondo bianco standard per massima leggibilità quando si apre */
+        box-shadow: var(--shadow) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .dropdown-content a {
+        color: var(--dark-blue) !important; /* Testo scuro su fondo bianco per il sottomenu aperto */
+        padding: 10px 12px !important;
+    }
+    
+    .dropdown-content a:hover {
+        background-color: var(--light-blue) !important;
+        color: var(--primary-blue) !important;
+    }
+
+    /* Ottimizzazione griglia prodotti per mobile */
+    .grid-products {
+        grid-template-columns: 1fr !important; /* Un prodotto alla volta sui telefoni per vederli bene */
+        gap: 20px;
+    }
+    
+    .section-title {
+        font-size: 22px !important;
+        text-align: center;                /* Centra anche i titoli dei Brand/Sezioni per coerenza */
+    }
+}
+
+/* Correzione visibilità pulsanti nella tabella admin */
+table .btn-outline {
+    color: var(--primary-blue) !important;
+    border: 2px solid var(--primary-blue) !important;
+    background-color: transparent !important;
+}
+
+table .btn-outline:hover {
+    color: var(--white) !important;
+    background-color: var(--primary-blue) !important;
+}
+
+/* Inserisci questa regola in fondo al file style.css */
+.pdf-card {
+    background: var(--white);
+    border-left: 5px solid var(--accent-blue);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+}
