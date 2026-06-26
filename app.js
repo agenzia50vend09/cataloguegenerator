@@ -329,35 +329,32 @@ class CatalogApp {
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Funzione per generare l'anteprima in un nuovo tab
+        // Genera il PDF come Blob binario e lo apre in un nuovo tab
         const mostraAnteprimaInNuovoTab = () => {
-            html2pdf().set(opzioni).from(elementoEsportazione).outputPdf('dataurlstring').then((pdfDataUrl) => {
-                // Crea una nuova finestra/tab e vi inietta l'anteprima senza invocare print()
-                const nuovaFinestra = window.open();
-                if (nuovaFinestra) {
-                    nuovaFinestra.document.write(`
-                        <html>
-                        <head><title>Anteprima Catalogo Sweets</title></head>
-                        <body style="margin:0; padding:0; background:#525659;">
-                            <embed width="100%" height="100%" src="${pdfDataUrl}" type="application/pdf">
-                        </body>
-                        </html>
-                    `);
-                    nuovaFinestra.document.close();
-                } else {
+            html2pdf().set(opzioni).from(elementoEsportazione).output('blob').then((pdfBlob) => {
+                // Crea un URL sicuro dall'oggetto Blob
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                
+                // Apre il visualizzatore PDF nativo del browser in un nuovo pannello
+                const nuovaFinestra = window.open(blobUrl, '_blank');
+                
+                if (!nuovaFinestra) {
                     alert("Il blocco pop-up del browser ha impedito l'apertura dell'anteprima.");
                 }
+            }).catch((errore) => {
+                console.error("Errore durante la generazione del PDF:", errore);
+                alert("Si è verificato un errore nella generazione del PDF.");
             });
         };
 
-        // Caricamento asincrono della libreria in caso di assenza
+        // Caricamento asincrono della libreria html2pdf se non presente
         if (typeof html2pdf === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
             script.onload = mostraAnteprimaInNuovoTab;
             document.head.appendChild(script);
         } else {
-            moostraAnteprimaInNuovoTab();
+            mostraAnteprimaInNuovoTab();
         }
     }
 
