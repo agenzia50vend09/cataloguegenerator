@@ -45,26 +45,19 @@ main {
 
 /* --- HEADER & NAVIGATION --- */
 header {
-    /* Il gradiente sopra serve a scurire la foto per leggere i testi bianchi. 
-       Cambia l'URL dopo la virgola con la tua foto preferita */
     background-image: linear-gradient(rgba(0, 45, 98, 0.6), rgba(0, 45, 98, 0.75)), 
                       url('https://media.engage.it/2020/2/perfetti_van_melle_gara_media_87137.jpg') !important;
-    
-    /* Forza il posizionamento e la copertura dell'immagine */
     background-size: cover !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
-    
-    /* Rimuove eventuali colori di sfondo solidi ereditati prima */
-    background-color: transparent !important; 
-    
+    background-color: transparent !important;
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
     z-index: 100;
     border-bottom: 3px solid var(--accent-blue);
-padding: 45px 0 !important; /* Aumentato il padding sopra e sotto (prima era 10px/15px) */
-    min-height: 160px;          /* Garantisce un'altezza minima generosa e professionale */
+    padding: 45px 0 !important;
+    min-height: 160px;
     display: flex;
     align-items: center;
 }
@@ -76,7 +69,6 @@ padding: 45px 0 !important; /* Aumentato il padding sopra e sotto (prima era 10p
     padding: 15px 0;
 }
 
-/* Logo in bianco per risaltare sulla foto */
 .logo {
     font-size: 45px;
     font-weight: 800;
@@ -93,6 +85,12 @@ nav {
     align-items: center;
 }
 
+#user-nav-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 /* Pulsanti */
 button {
     cursor: pointer;
@@ -103,7 +101,6 @@ button {
     transition: var(--transition);
 }
 
-/* Pulsanti di navigazione adattati allo sfondo scuro/fotografico */
 #btn-view-all, .dropbtn {
     background-color: transparent;
     color: var(--white);
@@ -115,7 +112,6 @@ button {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Pulsante Admin modificato per integrarsi con la nuova grafica */
 .btn-outline {
     background-color: rgba(255, 255, 255, 0.1);
     border: 2px solid var(--white);
@@ -297,9 +293,7 @@ button {
     color: var(--primary-blue);
 }
 
-.out-of-stock {
-    opacity: 0.6;
-}
+.out-of-stock { opacity: 0.6; }
 .out-of-stock .product-price { color: #6c757d; }
 
 /* --- MODAL (LOGIN ADMIN) --- */
@@ -409,7 +403,10 @@ th, td {
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
-th { background-color: var(--light-blue); font-weight: 600; }
+th {
+    background-color: var(--light-blue);
+    font-weight: 600;
+}
 .admin-actions-btns { display: flex; gap: 10px; }
 
 /* --- FOOTER --- */
@@ -421,55 +418,48 @@ footer {
     font-size: 14px;
 }
 
-/* --- OTTIMIZZAZIONE PER DISPOSITIVI MOBILI (SMARTPHONE - LAYOUT ORIZZONTALE) --- */
+/* --- OTTIMIZZAZIONE PER DISPOSITIVI MOBILI --- */
 @media (max-width: 768px) {
-    
     header {
-        padding: 25px 0 !important; /* Padding bilanciato per il layout compatto */
+        padding: 25px 0 !important;
         height: auto !important;
         position: relative !important;
     }
 
     .header-container {
-        flex-direction: column !important; /* Logo sopra, menu sotto */
-        gap: 15px;                         /* Spazio tra il logo e la riga dei pulsanti */
+        flex-direction: column !important;
+        gap: 15px;
         text-align: center;
     }
 
-    .logo {
-        font-size: 45px !important;        /* Logo leggermente più piccolo per i telefoni */
-    }
+    .logo { font-size: 45px !important; }
 
-    nav {
-        flex-direction: row !important;    /* FORZA I PULSANTI IN ORIZZONTALE */
-        flex-wrap: wrap;                   /* Se lo schermo è stretto, i pulsanti vanno a capo da soli senza rompere il layout */
-        justify-content: center;           /* Centra i pulsanti orizzontalmente sotto il logo */
+    nav, #user-nav-controls {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        justify-content: center;
         width: 100%;
-        gap: 8px;                          /* Spazio compatto tra i pulsanti sulla stessa riga */
+        gap: 8px;
     }
 
-    /* Regoliamo la dimensione dei pulsanti su mobile per farli stare comodamente in riga */
-    #btn-view-all, 
-    .dropdown .dropbtn, 
-    #btn-admin-gate {
-        padding: 8px 12px !important;      /* Pulsanti leggermente più compatti */
-        font-size: 14px !important;        /* Testo leggermente più piccolo per ottimizzare lo spazio */
-        width: auto !important;            /* Impedisce ai pulsanti di allargarsi al 100% */
+    #btn-view-all, .dropdown .dropbtn, #btn-admin-gate {
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        width: auto !important;
     }
 
-    /* Gestione dei menu a tendina (Dropdown) su mobile */
     .dropdown-content {
-        position: absolute !important;     /* Torna a fluttuare sopra il catalogo per non spingere giù tutto */
+        position: absolute !important;
         left: 50%;
-        transform: translateX(-50%);       /* Centra il quadratino del menu rispetto al suo pulsante */
+        transform: translateX(-50%);
         min-width: 140px;
-        background-color: var(--white) !important; /* Sfondo bianco standard per massima leggibilità quando si apre */
+        background-color: var(--white) !important;
         box-shadow: var(--shadow) !important;
         border: 1px solid var(--border-color) !important;
     }
 
     .dropdown-content a {
-        color: var(--dark-blue) !important; /* Testo scuro su fondo bianco per il sottomenu aperto */
+        color: var(--dark-blue) !important;
         padding: 10px 12px !important;
     }
     
@@ -478,19 +468,17 @@ footer {
         color: var(--primary-blue) !important;
     }
 
-    /* Ottimizzazione griglia prodotti per mobile */
     .grid-products {
-        grid-template-columns: 1fr !important; /* Un prodotto alla volta sui telefoni per vederli bene */
+        grid-template-columns: 1fr !important;
         gap: 20px;
     }
     
     .section-title {
         font-size: 22px !important;
-        text-align: center;                /* Centra anche i titoli dei Brand/Sezioni per coerenza */
+        text-align: center;
     }
 }
 
-/* Correzione visibilità pulsanti nella tabella admin */
 table .btn-outline {
     color: var(--primary-blue) !important;
     border: 2px solid var(--primary-blue) !important;
@@ -500,14 +488,4 @@ table .btn-outline {
 table .btn-outline:hover {
     color: var(--white) !important;
     background-color: var(--primary-blue) !important;
-}
-
-/* Inserisci questa regola in fondo al file style.css */
-.pdf-card {
-    background: var(--white);
-    border-left: 5px solid var(--accent-blue);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-bottom: 30px;
 }
