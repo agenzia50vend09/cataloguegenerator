@@ -350,12 +350,6 @@ class CatalogApp {
                     <p>Catalogo Prodotti Ufficiale</p>
                 </header>
                 ${catalogoHTML}
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(() => { window.close(); }, 500);
-                    };
-                <\/script>
             </body>
             </html>
         `);
