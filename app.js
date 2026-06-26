@@ -284,14 +284,14 @@ class CatalogApp {
 
     // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
     generateCatalogPDF() {
-        // Salva temporaneamente la vista corrente per poterla ripristinare alla fine
+        // 1. Salva temporaneamente la vista corrente per poterla ripristinare alla fine
         const previousView = this.currentView;
 
-        // Crea una vista temporanea personalizzata o forza il rendering completo di tutti i prodotti
-        const container = document.getElementById('main-content');
-        if (!container) return;
-
-        container.innerHTML = ''; 
+        // 2. Crea il contenitore temporaneo nascosto per impaginare tutto il catalogo continuo
+        const pdfContainer = document.createElement('div');
+        pdfContainer.id = 'pdf-continuous-container';
+        // Stili per garantire lo sfondo bianco e font coerenti
+        pdfContainer.style.cssText = "background: white; padding: 30px; font-family: sans-serif; width: 1024px; box-sizing: border-box;";
 
         const ordinaPerNovita = (lista) => {
             return [...lista].sort((a, b) => {
@@ -301,69 +301,124 @@ class CatalogApp {
             });
         };
 
-        // Genera la sezione Novità se presente
+        // 3. Genera l'Header del Catalogo
+        const header = document.createElement('header');
+        header.style.cssText = "background: #002d62; color: white; padding: 30px; text-align: center; margin-bottom: 30px; border-radius: 8px;";
+        header.innerHTML = "<h1 style='margin:0; font-size:32px;'>SWEETS</h1><p style='margin:5px 0 0 0;'>Catalogo Prodotti Ufficiale</p>";
+        pdfContainer.appendChild(header);
+
+        // 4. Genera la sezione Novità se presente
         const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
         if (novitaProducts.length > 0) {
-            container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
-            container.appendChild(this.createGrid(novitaProducts));
+            pdfContainer.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
+            pdfContainer.appendChild(this.createGrid(novitaProducts));
         }
 
-        // Estrae tutti i brand e per ciascuno mostra TUTTI i prodotti (senza il .slice(0, 3))
+        // 5. Estrae tutti i brand e mostra TUTTI i prodotti
         const brands = [...new Set(this.products.map(p => p.brand))];
         brands.forEach(brand => {
             const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand); // Rimosso il .slice(0, 3)
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);
             
             const headingEl = document.createElement('h2');
             headingEl.className = 'section-title';
             headingEl.innerHTML = `<span class="brand-title">${brand}</span>`;
             
-            container.appendChild(headingEl);
-            container.appendChild(this.createGrid(brandProducts));
+            pdfContainer.appendChild(headingEl);
+            pdfContainer.appendChild(this.createGrid(brandProducts));
         });
 
-        // Apri la finestra di stampa e cattura l'HTML completo appena generato
-        const printWindow = window.open('', '_blank');
-        const catalogoHTML = container.innerHTML;
-        const stilicss = Array.from(document.styleSheets)
-            .map(styleSheet => {
-                try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
-                catch (e) { return ''; }
-            }).join('\n');
+        // 6. Appendiamo momentaneamente al body (invisibile) per iniettare gli stili corretti delle card quadrate
+        document.body.appendChild(pdfContainer);
 
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sweets - Catalogo Prodotti PDF</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    ${stilicss}
-                    body { background: white; padding: 20px; }
-                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; }
-                    @media print { .product-card { page-break-inside: avoid; } }
-                </style>
-            </head>
-            <body>
-                <header style="background: #002d62; color: white; padding: 20px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
-                    <h1>SWEETS</h1>
-                    <p>Catalogo Prodotti Ufficiale</p>
-                </header>
-                ${catalogoHTML}
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(() => { window.close(); }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        // Iniettiamo un blocco di stili CSS temporaneo specifico per forzare il layout continuo quadrato
+        const styleOverride = document.createElement('style');
+        styleOverride.id = 'pdf-style-override';
+        styleOverride.innerHTML = `
+            #pdf-continuous-container .grid-products { 
+                display: grid !important; 
+                grid-template-columns: repeat(3, 1fr) !important; 
+                gap: 20px !important; 
+                margin-bottom: 30px !important;
+            }
+            #pdf-continuous-container .product-card { 
+                display: flex !important;
+                flex-direction: column !important;
+                aspect-ratio: 1 / 1 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+                background: #ffffff !important;
+                border: 1px solid #dbe2ef !important;
+                border-radius: 12px !important;
+            }
+            #pdf-continuous-container .product-img-container {
+                height: 45% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 10px !important;
+                box-sizing: border-box !important;
+            }
+            #pdf-continuous-container .product-img-container img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+            }
+            #pdf-continuous-container .product-info {
+                height: 55% !important;
+                padding: 12px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                box-sizing: border-box !important;
+            }
+            #pdf-continuous-container .product-name {
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            #pdf-continuous-container .product-desc {
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                height: 32px !important;
+            }
+        `;
+        document.head.appendChild(styleOverride);
 
-        // Ripristina la vista precedente dell'applicazione sullo schermo dell'utente
-        this.currentView = previousView;
-        this.render();
+        // 7. Configurazione di html2pdf per generare un FOGLIO CONTINUO (Senza interruzioni di pagina)
+        const opzioni = {
+            margin:       0,
+            filename:     'Sweets_Catalogo_Continuo.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true }, // scale 2 mantiene alta la qualità delle immagini
+            jsPDF:        { unit: 'px', format: [1024, pdfContainer.scrollHeight], orientation: 'portrait' } 
+            // Sopra: calcola l'altezza esatta (scrollHeight) dinamica del catalogo per farlo diventare una pagina unica!
+        };
+
+        // Carica la libreria al volo se non è inclusa nell'index.html e lancia la conversione
+        const generaFile = () => {
+            html2pdf().set(opzioni).from(pdfContainer).save().then(() => {
+                // Sotto-pulizia degli elementi temporanei
+                document.body.removeChild(pdfContainer);
+                document.head.removeChild(styleOverride);
+                // Ripristina l'applicazione allo stato iniziale
+                this.currentView = previousView;
+                this.render();
+            });
+        };
+
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = generaFile;
+            document.head.appendChild(script);
+        } else {
+            generaFile();
+        }
     }
 
     // --- LOGICA PANNELLO ADMIN ---
