@@ -282,82 +282,109 @@ class CatalogApp {
         return grid;
     }
 
-    // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
+    // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF SENZA STAMPA & WHATSAPP) ---
+    
     generateCatalogPDF() {
-        // Salva temporaneamente la vista corrente per poterla ripristinare alla fine
-        const previousView = this.currentView;
+        // Creiamo un layout HTML pulito ottimizzato per il PDF tabellare
+        const elementoEsportazione = document.createElement('div');
+        elementoEsportazione.style.padding = '20px';
+        elementoEsportazione.style.fontFamily = 'Arial, sans-serif';
+        
+        let contenutoHTML = `
+            <div style="background: #002d62; color: white; padding: 25px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
+                <h1 style="margin: 0; letter-spacing: 2px;">SWEETS</h1>
+                <p style="margin: 5px 0 0 0; opacity: 0.8;">Catalogo Prodotti Ufficiale</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr style="background-color: #e6f0fa; color: #002d62; text-align: left;">
+                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Brand</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Prodotto</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Confezione</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #0056b3; text-align: right;">Prezzo</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
-        // Crea una vista temporanea personalizzata o forza il rendering completo di tutti i prodotti
-        const container = document.getElementById('main-content');
-        if (!container) return;
-
-        container.innerHTML = ''; 
-
-        const ordinaPerNovita = (lista) => {
-            return [...lista].sort((a, b) => {
-                const aNovita = String(a.novita) === 'true' ? 1 : 0;
-                const bNovita = String(b.novita) === 'true' ? 1 : 0;
-                return bNovita - aNovita; 
-            });
-        };
-
-        // Genera la sezione Novità se presente
-        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
-        if (novitaProducts.length > 0) {
-            container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
-            container.appendChild(this.createGrid(novitaProducts));
-        }
-
-        // Estrae tutti i brand e per ciascuno mostra TUTTI i prodotti (senza il .slice(0, 3))
-        const brands = [...new Set(this.products.map(p => p.brand))];
-        brands.forEach(brand => {
-            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand); // Rimosso il .slice(0, 3)
-            
-            const headingEl = document.createElement('h2');
-            headingEl.className = 'section-title';
-            headingEl.innerHTML = `<span class="brand-title">${brand}</span>`;
-            
-            container.appendChild(headingEl);
-            container.appendChild(this.createGrid(brandProducts));
+        this.products.forEach(p => {
+            const isDisponibile = String(p.disponibile) === 'true';
+            contenutoHTML += `
+                <tr style="border-bottom: 1px solid #dbe2ef; ${!isDisponibile ? 'opacity: 0.5;' : ''}">
+                    <td style="padding: 10px; font-weight: bold; color: #0056b3;">${p.brand}</td>
+                    <td style="padding: 10px;">${p.nome} ${String(p.novita) === 'true' ? '<span style="color: #0088cc; font-weight: bold; font-size: 11px;">[NOVITÀ]</span>' : ''}</td>
+                    <td style="padding: 10px; text-transform: capitalize; color: #4a5568;">${p.packtype}</td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">${parseFloat(p.prezzo || 0).toFixed(2)}€</td>
+                </tr>
+            `;
         });
 
-        // Apri la finestra di stampa e cattura l'HTML completo appena generato
-        const printWindow = window.open('', '_blank');
-        const catalogoHTML = container.innerHTML;
-        const stilicss = Array.from(document.styleSheets)
-            .map(styleSheet => {
-                try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
-                catch (e) { return ''; }
-            }).join('\n');
+        contenutoHTML += `</tbody></table>`;
+        elementoEsportazione.innerHTML = contenidoHTML;
 
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sweets - Catalogo Prodotti PDF</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    ${stilicss}
-                    body { background: white; padding: 20px; }
-                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; }
-                    @media print { .product-card { page-break-inside: avoid; } }
-                </style>
-            </head>
-            <body>
-                <header style="background: #002d62; color: white; padding: 20px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
-                    <h1>SWEETS</h1>
-                    <p>Catalogo Prodotti Ufficiale</p>
-                </header>
-                ${catalogoHTML}
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        // Opzioni di configurazione per il PDF
+        const opzioni = {
+            margin:       10,
+            filename:     'Catalogo_Prodotti_Sweets.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-        // Ripristina la vista precedente dell'applicazione sullo schermo dell'utente
-        this.currentView = previousView;
-        this.render();
+        // Carica dinamicamente la libreria html2pdf.js per generare il file direttamente senza dialoghi di stampa
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = () => {
+                html2pdf().set(opzioni).from(elementoEsportazione).save();
+            };
+            document.head.appendChild(script);
+        } else {
+            html2pdf().set(opzioni).from(elementoEsportazione).save();
+        }
+    }
+
+    sendCatalogWhatsApp() {
+        if (!this.products || this.products.length === 0) {
+            alert("Nessun prodotto disponibile da inviare.");
+            return;
+        }
+
+        // Recupera l'utente admin loggato per estrarre il numero di telefono (se presente)
+        const currentAdmin = localStorage.getItem('currentAdminUser') || '';
+        const cred = this.credentials.find(c => c.username === currentAdmin);
+        const numeroTelefono = cred && cred.telefono ? cred.telefono.replace(/\s+/g, '') : '';
+
+        // Costruzione del messaggio di testo formattato per WhatsApp
+        let messaggio = `*📦 CATALOGO PRODOTTI SWEETS *\n`;
+        messaggio += `_Aggiornato al: ${new Date().toLocaleDateString('it-IT')}_\n\n`;
+
+        // Raggruppa i prodotti per Brand
+        const brands = [...new Set(this.products.map(p => p.brand))];
+        
+        brands.forEach(brand => {
+            messaggio += `*🔹 ${brand.toUpperCase()}*\n`;
+            const prodottiBrand = this.products.filter(p => p.brand === brand);
+            
+            prodottiBrand.forEach(p => {
+                const flagNovita = String(p.novita) === 'true' ? ' ✨' : '';
+                const flagDispo = String(p.disponibile) === 'true' ? '' : ' _(Esaurito)_';
+                messaggio += `• ${p.nome}${flagNovita} (${p.packtype}) - *${parseFloat(p.prezzo || 0).toFixed(2)}€*${flagDispo}\n`;
+            });
+            messaggio += `\n`;
+        });
+
+        messaggio += `_Per info e ordini rispondi a questo messaggio._`;
+
+        // Encode del testo per l'URL di WhatsApp
+        const testoUrl = encodeURIComponent(messaggio);
+        
+        // Se l'admin ha un telefono configurato invia a se stesso (promemoria/test), altrimenti apre la chat generica
+        const urlWhatsApp = numeroTelefono 
+            ? `https://api.whatsapp.com/send?phone=${numeroTelefono}&text=${testoUrl}`
+            : `https://api.whatsapp.com/send?text=${testoUrl}`;
+
+        window.open(urlWhatsApp, '_blank');
     }
 
     // --- LOGICA PANNELLO ADMIN ---
