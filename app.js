@@ -283,79 +283,114 @@ class CatalogApp {
     }
 
     generateCatalogPDF() {
-        // Creiamo un layout HTML pulito ottimizzato per il PDF
-        const elementoEsportazione = document.createElement('div');
-        elementoEsportazione.style.padding = '20px';
-        elementoEsportazione.style.fontFamily = 'Arial, sans-serif';
-        elementoEsportazione.style.backgroundColor = '#ffffff';
-        
-        let contenutoHTML = `
-            <div style="background: #002d62; color: white; padding: 25px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
-                <h1 style="margin: 0; letter-spacing: 2px;">SWEETS</h1>
-                <p style="margin: 5px 0 0 0; opacity: 0.8;">Catalogo Prodotti Ufficiale</p>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                <thead>
-                    <tr style="background-color: #e6f0fa; color: #002d62; text-align: left;">
-                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Brand</th>
-                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Prodotto</th>
-                        <th style="padding: 12px; border-bottom: 2px solid #0056b3;">Confezione</th>
-                        <th style="padding: 12px; border-bottom: 2px solid #0056b3; text-align: right;">Prezzo</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+        // Apri un nuovo pannello/scheda vuoto nel browser
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Il blocco pop-up del browser ha impedito l'apertura del catalogo.");
+            return;
+        }
 
-        this.products.forEach(p => {
-            const isDisponibile = String(p.disponibile) === 'true';
-            contenutoHTML += `
-                <tr style="border-bottom: 1px solid #dbe2ef; ${!isDisponibile ? 'opacity: 0.5;' : ''}">
-                    <td style="padding: 10px; font-weight: bold; color: #0056b3;">${p.brand}</td>
-                    <td style="padding: 10px;">${p.nome} ${String(p.novita) === 'true' ? '<span style="color: #0088cc; font-weight: bold; font-size: 11px;">[NOVITÀ]</span>' : ''}</td>
-                    <td style="padding: 10px; text-transform: capitalize; color: #4a5568;">${p.packtype}</td>
-                    <td style="padding: 10px; text-align: right; font-weight: bold;">${parseFloat(p.prezzo || 0).toFixed(2)}€</td>
-                </tr>
-            `;
-        });
+        // Recuperiamo gli stili CSS correnti dal file style.css caricato
+        const stilicss = Array.from(document.styleSheets)
+            .map(styleSheet => {
+                try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
+                catch (e) { return ''; }
+            }).join('\n');
 
-        contenutoHTML += `</tbody></table>`;
-        elementoEsportazione.innerHTML = contenutoHTML;
-
-        const opzioni = {
-            margin:       10,
-            filename:     'Catalogo_Prodotti_Sweets.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // Genera il PDF come Blob binario e lo apre in un nuovo tab
-        const mostraAnteprimaInNuovoTab = () => {
-            html2pdf().set(opzioni).from(elementoEsportazione).output('blob').then((pdfBlob) => {
-                // Crea un URL sicuro dall'oggetto Blob
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                
-                // Apre il visualizzatore PDF nativo del browser in un nuovo pannello
-                const nuovaFinestra = window.open(blobUrl, '_blank');
-                
-                if (!nuovaFinestra) {
-                    alert("Il blocco pop-up del browser ha impedito l'apertura dell'anteprima.");
-                }
-            }).catch((errore) => {
-                console.error("Errore durante la generazione del PDF:", errore);
-                alert("Si è verificato un errore nella generazione del PDF.");
+        // Generiamo l'HTML con tutti i prodotti (versione estesa senza slice)
+        let catalogoHTML = '';
+        const ordinaPerNovita = (lista) => {
+            return [...lista].sort((a, b) => {
+                const aNovita = String(a.novita) === 'true' ? 1 : 0;
+                const bNovita = String(b.novita) === 'true' ? 1 : 0;
+                return bNovita - aNovita; 
             });
         };
 
-        // Caricamento asincrono della libreria html2pdf se non presente
-        if (typeof html2pdf === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-            script.onload = mostraAnteprimaInNuovoTab;
-            document.head.appendChild(script);
-        } else {
-            mostraAnteprimaInNuovoTab();
+        // 1. Sezione Novità
+        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
+        if (novitaProducts.length > 0) {
+            catalogoHTML += `<h2 class="section-title">✨ Novità In Evidenza</h2>`;
+            catalogoHTML += `<div class="grid-products">`;
+            novitaProducts.forEach(prod => catalogoHTML += generareCardHTML(prod));
+            catalogoHTML += `</div>`;
         }
+
+        // 2. Sezione per ogni Brand (Tutti i prodotti, rimosso il .slice(0,3))
+        const brands = [...new Set(this.products.map(p => p.brand))];
+        brands.forEach(brand => {
+            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand);
+            
+            catalogoHTML += `<h2 class="section-title"><span class="brand-title">${brand}</span></h2>`;
+            catalogoHTML += `<div class="grid-products">`;
+            brandProducts.forEach(prod => catalogoHTML += generareCardHTML(prod));
+            catalogoHTML += `</div>`;
+        });
+
+        // Funzione di supporto per generare la singola card (preservando lo stile originale di app.js)
+        function generareCardHTML(prod) {
+            const isDisponibile = String(prod.disponibile) === 'true';
+            const isNovita = String(prod.novita) === 'true';
+            // Usiamo un'immagine segnaposto pulita per il PDF per evitare blocchi CORS sulle immagini di Drive
+            const fotoUrl = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%" y="50%" font-family="Arial" font-size="14" fill="%23999" text-anchor="middle" dy=".3em"%3E' + encodeURIComponent(prod.nome) + '%3C/text%3E%3C/svg%3E';
+
+            return `
+                <div class="product-card ${!isDisponibile ? 'out-of-stock' : ''}">
+                    ${isNovita ? '<div class="badge-novita">Novità</div>' : ''}
+                    <div class="product-img-container">
+                        <img src="${fotoUrl}" alt="${prod.nome}">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-brand">${prod.brand}</div>
+                        <div class="product-name">${prod.nome}</div>
+                        <div class="product-desc">${prod.descrizione}</div>
+                        <div class="product-meta">
+                            <span><i class="fa-solid fa-boxes-stacked"></i> ${prod.packtype}</span>
+                            <span>🏷️ ${prod.type}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="product-price">${parseFloat(prod.prezzo || 0).toFixed(2)}€</span>
+                            <span style="font-size:12px; font-weight:bold; color:${isDisponibile ? 'var(--success-green)' : 'var(--danger-red)'}">
+                                ${isDisponibile ? 'Disponibile' : 'Esaurito'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Scriviamo il documento nel nuovo pannello SENZA chiamare window.print()
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Sweets - Catalogo Prodotti</title>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    ${stilicss}
+                    body { background: #f8f9fa; padding: 40px; }
+                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; }
+                    
+                    /* Ottimizzazione del layout stile "Anteprima di Stampa/PDF" permanente */
+                    @media screen {
+                        body { max-width: 1024px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); background: white; }
+                    }
+                    .product-card { page-break-inside: avoid; break-inside: avoid; }
+                </style>
+            </head>
+            <body>
+                <header style="background: #002d62; color: white; padding: 30px; text-align: center; margin-bottom: 40px; border-radius: 6px; min-height: auto; position: static;">
+                    <h1 style="font-size: 36px; margin: 0;">SWEETS</h1>
+                    <p style="margin: 5px 0 0 0; opacity: 0.9;">Catalogo Prodotti Ufficiale</p>
+                </header>
+                <div class="container">
+                    ${catalogoHTML}
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
     sendCatalogWhatsApp() {
