@@ -151,7 +151,214 @@ class CatalogApp {
         return { novitaGenerali, strutturaBrand };
     }
 
-    // --- GENERATORE DI CATALOGO PDF E FUNZIONE WHATSAPP ---
+    // --- GENERATORE DI CATALOGO PDF A RIQUADRI (STILE GRID DEL SITO) ED INVIO WA ---
+    generateAndSendPDF(sendWhatsApp = false) {
+        if (!this.products || this.products.length === 0) {
+            alert("Nessun prodotto disponibile per generare il catalogo.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        // Creiamo il documento in formato A4 (210mm x 297mm)
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 14;
+        
+        // Dimensioni delle card (strutturate a 2 colonne come sul sito in modalità responsive/tablet)
+        const cardWidth = 86;
+        const cardHeight = 75;
+        const gapX = 10;
+        const gapY = 10;
+        
+        let currentY = 35;
+        const dataStruttura = this.getOrderedProductsStructure();
+
+        // Funzione di utilità per stampare l'intestazione della pagina
+        const stampaHeaderPagina = (numeroPagina) => {
+            doc.setFillColor(0, 45, 98); // --dark-blue dello style.css
+            doc.rect(0, 0, pageWidth, 24, 'F');
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(255, 255, 255);
+            doc.text("SWEETS CATALOGUE", margin, 16);
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Aggiornato il: ${new Date().toLocaleDateString('it-IT')} | Pag. ${numeroPagina}`, pageWidth - margin - 50, 15);
+        };
+
+        // Inizializza la prima pagina
+        let paginaCorrente = 1;
+        stampaHeaderPagina(paginaCorrente);
+
+        // Funzione interna per disegnare una singola card di un prodotto
+        const disegnaCardProdotto = (prod, x, y) => {
+            const isDisponibile = String(prod.disponibile) === 'true';
+            const isNovita = String(prod.novita) === 'true';
+
+            // 1. Sfondo del riquadro (Card bianca con bordo)
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(219, 226, 239); // --border-color dello style.css
+            doc.setLineWidth(0.3);
+            doc.roundedRect(x, y, cardWidth, cardHeight, 3, 3, 'FD');
+
+            // 2. Eventuale Badge "Novità" (Riquadro blu in alto a sinistra)
+            if (isNovita) {
+                doc.setFillColor(0, 136, 204); // --accent-blue
+                doc.roundedRect(x + 4, y + 4, 16, 5, 1, 1, 'F');
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(7);
+                doc.setTextColor(255, 255, 255);
+                doc.text("NOVITÀ", x + 5.5, y + 7.5);
+            }
+
+            // 3. Informazioni Prodotto (Dati testuali incolonnati)
+            let testoY = y + 15;
+
+            // Brand
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.setTextColor(0, 136, 204); // --accent-blue
+            doc.text(String(prod.brand).toUpperCase(), x + 5, testoY);
+            testoY += 5;
+
+            // Nome Prodotto
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(0, 45, 98); // --dark-blue
+            // Evita che il nome esca dai margini della card tagliandolo se troppo lungo
+            const nomeTroncato = doc.splitTextToSize(prod.nome, cardWidth - 10)[0];
+            doc.text(nomeTroncato, x + 5, testoY);
+            testoY += 6;
+
+            // Descrizione (Con ritorno a capo automatico multilinea come nel sito)
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            doc.setTextColor(74, 85, 104); // --gray-text
+            const lineeDescrizione = doc.splitTextToSize(prod.descrizione || "", cardWidth - 10);
+            // Mostra al massimo 3 linee di descrizione per non rompere il layout del riquadro
+            const lineeDaMostrare = lineeDescrizione.slice(0, 3);
+            lineeDaMostrare.forEach(linea => {
+                doc.text(linea, x + 5, testoY);
+                testoY += 4.5;
+            });
+
+            // 4. Sezione Meta a fondo riquadro (Tipo Pack e Tipo Categoria)
+            const metaY = y + 54;
+            doc.setFillColor(248, 249, 250); // --gray-bg
+            doc.rect(x + 1, metaY, cardWidth - 2, 8, 'F');
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(74, 85, 104);
+            doc.text(`Pack: ${prod.packtype}`, x + 5, metaY + 5.5);
+            doc.text(`Cat: ${prod.type}`, x + cardWidth - 30, metaY + 5.5);
+
+            // 5. Prezzo e Disponibilità (Fondo card)
+            const bottomY = y + 69;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(0, 86, 179); // --primary-blue
+            doc.text(`${parseFloat(prod.prezzo || 0).toFixed(2)}€`, x + 5, bottomY);
+
+            doc.setFontSize(9);
+            if (isDisponibile) {
+                doc.setTextColor(40, 167, 69); // --success-green
+                doc.text("Disponibile", x + cardWidth - 23, bottomY);
+            } else {
+                doc.setTextColor(220, 53, 69); // --danger-red
+                doc.text("Esaurito", x + cardWidth - 18, bottomY);
+            }
+        };
+
+        // Renderizziamo i prodotti seguendo l'ordinamento richiesto
+        let colonna = 0; // 0 = Sinistra, 1 = Destra
+
+        // Funzione per gestire il posizionamento e i cambi pagina dei riquadri
+        const inserisciCardNelFlusso = (prod) => {
+            // Calcola la X in base alla colonna (Sinistra o Destra)
+            const x = margin + colonna * (cardWidth + gapX);
+            
+            // Se lo spazio verticale è esaurito, passa alla pagina successiva
+            if (currentY + cardHeight > pageHeight - margin) {
+                doc.addPage();
+                paginaCorrente++;
+                stampaHeaderPagina(paginaCorrente);
+                currentY = 32; // Resetta la Y alla prima riga utile sotto l'header
+                colonna = 0;
+            }
+
+            disegnaCardProdotto(prod, x, currentY);
+
+            // Gestione dell'avanzamento griglia (due colonne)
+            if (colonna === 0) {
+                colonna = 1; // Il prossimo va a destra
+            } else {
+                colonna = 0; // Torna a sinistra
+                currentY += cardHeight + gapY; // Scendi alla riga successiva
+            }
+        };
+
+        // Funzione per stampare i titoli delle sezioni nel catalogo
+        const stampaTitoloSezione = (titolo) => {
+            // Se eravamo a metà riga (colonna destra vuota), riallinea per il titolo a tutta pagina
+            if (colonna === 1) {
+                colonna = 0;
+                currentY += cardHeight + gapY;
+            }
+            
+            if (currentY + 15 > pageHeight - margin) {
+                doc.addPage();
+                paginaCorrente++;
+                stampaHeaderPagina(paginaCorrente);
+                currentY = 32;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(15);
+            doc.setTextColor(0, 45, 98); // --dark-blue
+            doc.text(titolo, margin, currentY);
+            currentY += 8; // Spazio sotto il titolo della sezione
+        };
+
+        // --- 1. Sezione Generale "Novità In Evidenza" ---
+        if (dataStruttura.novitaGenerali.length > 0) {
+            stampaTitoloSezione("✨ NOVITÀ IN EVIDENZA");
+            dataStruttura.novitaGenerali.forEach(prod => {
+                inserisciCardNelFlusso(prod);
+            });
+        }
+
+        // --- 2. Sezioni Divise Per Brand ---
+        for (const brand in dataStruttura.strutturaBrand) {
+            const prodottiBrand = dataStruttura.strutturaBrand[brand];
+            if (prodottiBrand.length > 0) {
+                stampaTitoloSezione(`BRAND: ${brand.toUpperCase()} »`);
+                prodottiBrand.forEach(prod => {
+                    inserisciCardNelFlusso(prod);
+                });
+            }
+        }
+
+        // Generazione del nome file e download
+        const filename = `Catalogo_Sweets_A_Riquadri_${Date.now()}.pdf`;
+        doc.save(filename);
+
+        // Gestione dell'invio del messaggio d'appoggio per WhatsApp
+        if (sendWhatsApp) {
+            if (!this.currentUserPhone || this.currentUserPhone.trim() === "") {
+                alert("Attenzione: nessun numero di cellulare associato a questo utente amministratore nel database delle credenziali.");
+                return;
+            }
+            const cleanPhone = this.currentUserPhone.replace(/[^0-9+]/g, '');
+            const message = encodeURIComponent(`Ciao! Ho appena generato il nuovo *Catalogo Sweets* a riquadri (esatta copia grafica del sito).\nFile di riferimento: ${filename}\n\nUsa il tasto allegati di WhatsApp per caricarmi il PDF appena scaricato.`);
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    }
     
 
     // --- GESTIONE DATI TABELLA ADMIN ---
