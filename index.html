@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" sizes="301x301" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <title>Sweets - Area Riservata</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librerie per la generazione del PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <span>Sweets</span>
+            </div>
+            <nav>
+                <!-- Rimossi i pulsanti catalogo utente, lasciato solo Admin -->
+                <button id="btn-admin-gate" class="btn-outline" onclick="app.toggleAdminModal(true)">
+                    <i class="fa-solid fa-lock"></i> Admin
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" id="main-content">
+        <!-- Questa sezione rimarrà vuota per l'utente non loggato -->
+    </main>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content auth-card">
+            <span class="close-btn" onclick="app.toggleAdminModal(false)">&times;</span>
+            <h2><i class="fa-solid fa-shield-halved"></i> Accesso Admin</h2>
+            <form id="login-form" onsubmit="app.handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="Inserisci username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Inserisci password">
+                </div>
+                <button type="submit" class="btn-primary">Accedi</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="admin-section hidden">
+        <div class="container">
+            <div class="admin-header">
+                <h2>Pannello di Controllo Gestione Prodotti</h2>
+                <button class="btn-danger" onclick="app.handleLogout()">Logout</button>
+            </div>
+            
+            <!-- SEZIONE INSERIMENTO PRODOTTO -->
+            <div class="card form-card">
+                <h3 id="form-title">Aggiungi Nuovo Prodotto</h3>
+                <form id="product-form" onsubmit="app.handleProductSubmit(event)">
+                    <input type="hidden" id="prod-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Brand</label>
+                            <input type="text" id="prod-brand" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nome Prodotto</label>
+                            <input type="text" id="prod-nome" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrizione</label>
+                        <textarea id="prod-descrizione" rows="3" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prezzo (€)</label>
+                            <input type="number" id="prod-prezzo" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>URL Foto Google Drive <span style="color: var(--danger-red);">*</span></label>
+                            <input type="url" id="prod-foto" placeholder="https://lh3.googleusercontent.com/d/..." required oninput="app.handleUrlPreview(this.value)">
+                        </div>
+                    </div>
+                    <div id="photo-preview-container" class="hidden" style="margin: 15px 0; padding: 15px; background: var(--gray-bg); border-radius: 6px; text-align: center;">
+                        <p style="font-size: 12px; margin-bottom: 10px; color: var(--gray-text); font-weight: 600;">✓ Foto caricata:</p>
+                        <img id="photo-preview" src="" alt="Anteprima" style="max-width: 150px; max-height: 150px; border-radius: 4px;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="prod-type" required>
+                                <option value="gum">Gum</option>
+                                <option value="caramella">Caramella</option>
+                                <option value="lollipop">Lollipop</option>
+                                <option value="gommose">Gommose</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo Pack</label>
+                            <select id="prod-packtype" required>
+                                <option value="stick">Stick</option>
+                                <option value="box">Box</option>
+                                <option value="monopezzo">Monopezzo</option>
+                                <option value="lollipop">Lollipop</option>
+                                <option value="busta">Busta</option>
+                                <option value="bottle">Bottle</option>
+                                <option value="expo">Expo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row checkboxes">
+                        <label><input type="checkbox" id="prod-disponibile" checked> Disponibile</label>
+                        <label><input type="checkbox" id="prod-novita"> Novità</label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="btn-save">Salva Prodotto</button>
+                        <button type="button" class="btn-secondary hidden" id="btn-cancel-edit" onclick="app.resetProductForm()">Annulla Modifica</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- NUOVA SEZIONE: GENERAZIONE CATALOGO PDF ED INVIO WA -->
+            <div class="card pdf-card">
+                <h3>Esportazione e Condivisione Catalogo</h3>
+                <p style="margin-bottom: 15px; color: var(--gray-text); font-size: 14px;">
+                    Genera il catalogo in formato PDF strutturato con le novità in evidenza e i prodotti divisi per brand (con la novità come primo elemento). Potrai scaricarlo o inviarlo direttamente tramite WhatsApp al numero associato al tuo profilo.
+                </p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button type="button" class="btn-primary" style="background-color: var(--accent-blue);" onclick="app.generateAndSendPDF(false)">
+                        <i class="fa-solid fa-file-pdf"></i> Scarica PDF Catalogo
+                    </button>
+                    <button type="button" class="btn-primary" style="background-color: var(--success-green);" onclick="app.generateAndSendPDF(true)">
+                        <i class="fa-brands fa-whatsapp"></i> Invia Catalogo via WhatsApp
+                    </button>
+                </div>
+            </div>
+
+            <!-- LISTA PRODOTTI DATABASE -->
+            <div class="card table-card">
+                <h3>Lista Prodotti nel Database</h3>
+                <div class="table-responsive">
+                    <table id="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Foto</th>
+                                <th>Brand</th>
+                                <th>Nome</th>
+                                <th>Prezzo</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 SweetsCatalogue. Area Amministrativa Riservata.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
