@@ -282,13 +282,12 @@ class CatalogApp {
         return grid;
     }
 
-    // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF SENZA STAMPA & WHATSAPP) ---
-    
     generateCatalogPDF() {
-        // Creiamo un layout HTML pulito ottimizzato per il PDF tabellare
+        // Creiamo un layout HTML pulito ottimizzato per il PDF
         const elementoEsportazione = document.createElement('div');
         elementoEsportazione.style.padding = '20px';
         elementoEsportazione.style.fontFamily = 'Arial, sans-serif';
+        elementoEsportazione.style.backgroundColor = '#ffffff';
         
         let contenutoHTML = `
             <div style="background: #002d62; color: white; padding: 25px; text-align: center; margin-bottom: 30px; border-radius: 6px;">
@@ -320,9 +319,8 @@ class CatalogApp {
         });
 
         contenutoHTML += `</tbody></table>`;
-        elementoEsportazione.innerHTML = contenidoHTML;
+        elementoEsportazione.innerHTML = contenutoHTML;
 
-        // Opzioni di configurazione per il PDF
         const opzioni = {
             margin:       10,
             filename:     'Catalogo_Prodotti_Sweets.pdf',
@@ -331,16 +329,35 @@ class CatalogApp {
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Carica dinamicamente la libreria html2pdf.js per generare il file direttamente senza dialoghi di stampa
+        // Funzione per generare l'anteprima in un nuovo tab
+        const mostraAnteprimaInNuovoTab = () => {
+            html2pdf().set(opzioni).from(elementoEsportazione).outputPdf('dataurlstring').then((pdfDataUrl) => {
+                // Crea una nuova finestra/tab e vi inietta l'anteprima senza invocare print()
+                const nuovaFinestra = window.open();
+                if (nuovaFinestra) {
+                    nuovaFinestra.document.write(`
+                        <html>
+                        <head><title>Anteprima Catalogo Sweets</title></head>
+                        <body style="margin:0; padding:0; background:#525659;">
+                            <embed width="100%" height="100%" src="${pdfDataUrl}" type="application/pdf">
+                        </body>
+                        </html>
+                    `);
+                    nuovaFinestra.document.close();
+                } else {
+                    alert("Il blocco pop-up del browser ha impedito l'apertura dell'anteprima.");
+                }
+            });
+        };
+
+        // Caricamento asincrono della libreria in caso di assenza
         if (typeof html2pdf === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-            script.onload = () => {
-                html2pdf().set(opzioni).from(elementoEsportazione).save();
-            };
+            script.onload = mostraAnteprimaInNuovoTab;
             document.head.appendChild(script);
         } else {
-            html2pdf().set(opzioni).from(elementoEsportazione).save();
+            moostraAnteprimaInNuovoTab();
         }
     }
 
