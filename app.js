@@ -284,11 +284,47 @@ class CatalogApp {
 
     // --- FUNZIONALITÀ DI ESPORTAZIONE (PDF & WHATSAPP) ---
     generateCatalogPDF() {
-        this.currentView = { type: 'home', value: null };
-        this.render();
+        // Salva temporaneamente la vista corrente per poterla ripristinare alla fine
+        const previousView = this.currentView;
 
+        // Crea una vista temporanea personalizzata o forza il rendering completo di tutti i prodotti
+        const container = document.getElementById('main-content');
+        if (!container) return;
+
+        container.innerHTML = ''; 
+
+        const ordinaPerNovita = (lista) => {
+            return [...lista].sort((a, b) => {
+                const aNovita = String(a.novita) === 'true' ? 1 : 0;
+                const bNovita = String(b.novita) === 'true' ? 1 : 0;
+                return bNovita - aNovita; 
+            });
+        };
+
+        // Genera la sezione Novità se presente
+        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
+        if (novitaProducts.length > 0) {
+            container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
+            container.appendChild(this.createGrid(novitaProducts));
+        }
+
+        // Estrae tutti i brand e per ciascuno mostra TUTTI i prodotti (senza il .slice(0, 3))
+        const brands = [...new Set(this.products.map(p => p.brand))];
+        brands.forEach(brand => {
+            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
+            const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand); // Rimosso il .slice(0, 3)
+            
+            const headingEl = document.createElement('h2');
+            headingEl.className = 'section-title';
+            headingEl.innerHTML = `<span class="brand-title">${brand}</span>`;
+            
+            container.appendChild(headingEl);
+            container.appendChild(this.createGrid(brandProducts));
+        });
+
+        // Apri la finestra di stampa e cattura l'HTML completo appena generato
         const printWindow = window.open('', '_blank');
-        const catalogoHTML = document.getElementById('main-content').innerHTML;
+        const catalogoHTML = container.innerHTML;
         const stilicss = Array.from(document.styleSheets)
             .map(styleSheet => {
                 try { return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n'); } 
@@ -324,22 +360,10 @@ class CatalogApp {
             </html>
         `);
         printWindow.document.close();
-    }
 
-    sendCatalogWhatsApp() {
-        const loggedUser = localStorage.getItem('currentAdminUser');
-        const currentAdmin = this.credentials.find(c => c.username === loggedUser);
-
-        if (!currentAdmin || !currentAdmin.telefono) {
-            alert("Nessun numero di telefono associato a questo account admin nel foglio Google.");
-            return;
-        }
-
-        const numeroTelefono = currentAdmin.telefono.replace(/\s+/g, ''); 
-        const messaggio = encodeURIComponent("Ciao Admin! Il tuo catalogo prodotti Sweets è pronto. Puoi generare e consultare il PDF direttamente dal tuo pannello di controllo.");
-        const whatsappURL = `https://api.whatsapp.com/send?phone=${numeroTelefono}&text=${messaggio}`;
-        
-        window.open(whatsappURL, '_blank');
+        // Ripristina la vista precedente dell'applicazione sullo schermo dell'utente
+        this.currentView = previousView;
+        this.render();
     }
 
     // --- LOGICA PANNELLO ADMIN ---
