@@ -291,7 +291,7 @@ class CatalogApp {
             return;
         }
 
-        // Gestione sicura del CSS per evitare blocchi CORS che svuotano la pagina
+        // Gestione sicura del CSS per evitare blocchi CORS
         let stilicss = "";
         try {
             stilicss = Array.from(document.styleSheets)
@@ -299,7 +299,7 @@ class CatalogApp {
                     try { 
                         return Array.from(styleSheet.cssRules || styleSheet.rules).map(rule => rule.cssText).join('\n'); 
                     } catch (e) { 
-                        return ''; // Salta i fogli di stile cross-origin protetti senza rompere il codice
+                        return ''; 
                     }
                 }).join('\n');
         } catch (e) {
@@ -345,38 +345,70 @@ class CatalogApp {
                 <title>Sweets - Catalogo Prodotti</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
-                    /* Stili CSS strutturali di riserva per garantire la griglia anche se lo style.css fallisce il CORS */
                     :root {
                         --primary-blue: #0056b3; --dark-blue: #002d62; --light-blue: #e6f0fa;
                         --accent-blue: #0088cc; --white: #ffffff; --gray-bg: #f8f9fa;
                         --gray-text: #4a5568; --border-color: #dbe2ef; --danger-red: #dc3545; --success-green: #28a745;
                     }
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 40px; color: var(--dark-blue); }
-                    .container { width: 90%; max-width: 1200px; margin: 0 auto; }
-                    .section-title { font-size: 28px; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid var(--light-blue); margin-top: 40px; }
-                    .grid-products { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 20px; margin-bottom: 50px; }
-                    .product-card { background-color: var(--white); border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid var(--border-color); page-break-inside: avoid; break-inside: avoid; }
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 30px; color: var(--dark-blue); }
+                    .container { width: 95%; max-width: 1200px; margin: 0 auto; }
+                    .section-title { font-size: 26px; margin-bottom: 25px; padding-bottom: 8px; border-bottom: 2px solid var(--light-blue); margin-top: 30px; page-break-after: avoid; break-after: avoid; }
+                    
+                    /* Sistema multi-colonna alternativo a display:grid per prevenire la frammentazione dei riquadri */
+                    .grid-products { 
+                        display: block !important;
+                        column-count: 3 !important; 
+                        column-gap: 20px !important;
+                        margin-bottom: 30px; 
+                    }
+                    
+                    /* Regole tassative anti-taglio sui blocchi prodotto */
+                    .product-card { 
+                        display: inline-block !important; /* Forza il blocco a rimanere unito */
+                        width: 100%;
+                        margin-bottom: 20px;
+                        background-color: var(--white); 
+                        border-radius: 12px; 
+                        box-shadow: 0 4px 15px rgba(0, 92, 179, 0.08); 
+                        overflow: hidden; 
+                        position: relative; 
+                        border: 1px solid var(--border-color); 
+                        
+                        /* Proprietà standard e legacy per evitare divisioni sulle pagine A4 */
+                        page-break-inside: avoid !important; 
+                        break-inside: avoid !important; 
+                        break-inside: avoid-column !important;
+                    }
+                    
                     .badge-novita { position: absolute; top: 15px; left: 15px; background-color: var(--accent-blue); color: var(--white); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 2; }
-                    .product-img-container { height: 180px; background-color: #fff; display: flex; align-items: center; justify-content: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
+                    .product-img-container { height: 160px; background-color: #fff; display: flex; align-items: center; justify-content: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
                     .product-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
-                    .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
-                    .product-brand { font-size: 12px; text-transform: uppercase; color: var(--accent-blue); font-weight: 700; margin-bottom: 5px; }
-                    .product-name { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
-                    .product-desc { font-size: 14px; color: var(--gray-text); margin-bottom: 15px; flex-grow: 1; }
-                    .product-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: var(--gray-bg); padding: 8px 12px; border-radius: 6px; margin-bottom: 15px; }
-                    .product-price { font-size: 22px; font-weight: 700; color: var(--primary-blue); }
+                    .product-info { padding: 15px; display: flex; flex-direction: column; }
+                    .product-brand { font-size: 11px; text-transform: uppercase; color: var(--accent-blue); font-weight: 700; margin-bottom: 5px; }
+                    .product-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+                    .product-desc { font-size: 13px; color: var(--gray-text); margin-bottom: 12px; }
+                    .product-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; background: var(--gray-bg); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
+                    .product-price { font-size: 20px; font-weight: 700; color: var(--primary-blue); }
                     .out-of-stock { opacity: 0.6; }
                     
                     ${stilicss}
                     
+                    /* Ottimizzazione del foglio virtuale nello schermo */
                     @media screen {
-                        body { max-width: 1100px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); background: white; }
+                        body { max-width: 1024px; margin: 20px auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); background: white; border-radius: 8px; }
+                    }
+                    
+                    /* Ottimizzazione specifica in caso l'utente avvii la stampa A4 del browser manuale */
+                    @media print {
+                        body { padding: 0; background: white; }
+                        .container { width: 100%; }
+                        .product-card { box-shadow: none; border: 1px solid #cbd5e1; }
                     }
                 </style>
             </head>
             <body>
-                <header style="background: #002d62; color: white; padding: 30px; text-align: center; margin-bottom: 20px; border-radius: 6px;">
-                    <h1 style="font-size: 36px; margin: 0; letter-spacing: 1px;">SWEETS</h1>
+                <header style="background: #002d62; color: white; padding: 25px; text-align: center; margin-bottom: 20px; border-radius: 6px;">
+                    <h1 style="font-size: 32px; margin: 0; letter-spacing: 1px;">SWEETS</h1>
                     <p style="margin: 5px 0 0 0; opacity: 0.9;">Catalogo Prodotti Ufficiale</p>
                 </header>
                 <div class="container">
@@ -386,37 +418,6 @@ class CatalogApp {
             </html>
         `);
         printWindow.document.close();
-    }
-
-    // Funzione helper integrata nella classe per generare la card in totale sicurezza
-    generareCardHTMLPerPDF(prod) {
-        const isDisponibile = String(prod.disponibile) === 'true';
-        const isNovita = String(prod.novita) === 'true';
-        const photoUrl = this.getPhotoUrl(prod.foto);
-
-        return `
-            <div class="product-card ${!isDisponibile ? 'out-of-stock' : ''}">
-                ${isNovita ? '<div class="badge-novita">Novità</div>' : ''}
-                <div class="product-img-container">
-                    <img src="${photoUrl}" alt="${prod.nome}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
-                </div>
-                <div class="product-info">
-                    <div class="product-brand">${prod.brand}</div>
-                    <div class="product-name">${prod.nome}</div>
-                    <div class="product-desc">${prod.descrizione}</div>
-                    <div class="product-meta">
-                        <span><i class="fa-solid fa-boxes-stacked"></i> ${prod.packtype}</span>
-                        <span>🏷️ ${prod.type}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="product-price">${parseFloat(prod.prezzo || 0).toFixed(2)}€</span>
-                        <span style="font-size:12px; font-weight:bold; color:${isDisponibile ? 'var(--success-green)' : 'var(--danger-red)'}">
-                            ${isDisponibile ? 'Disponibile' : 'Esaurito'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     // --- LOGICA PANNELLO ADMIN ---
