@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo Sweets</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Sweets - Catalogo Prodotti</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -19,21 +19,33 @@
         </div>
     </header>
 
-    <!-- Barra controlli (nascosta di base) -->
-    <div class="container hidden" id="controls-bar" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+    <div class="container hidden" id="controls-bar" style="margin: 20px auto; display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn-outline" onclick="app.renderCatalog()">Catalogo</button>
         <div class="dropdown"><button class="dropbtn">Tipologia</button><div id="dropdown-type" class="dropdown-content"></div></div>
         <div class="dropdown"><button class="dropbtn">Confezione</button><div id="dropdown-packtype" class="dropdown-content"></div></div>
         <button id="admin-btn-manage" class="btn-outline" onclick="app.switchAdminView('management')">Gestisci</button>
         <button id="admin-btn-logout" class="btn-danger" onclick="app.handleLogout()">Esci</button>
         <button class="btn-outline" onclick="app.exportPDF('download')">PDF</button>
-        <button class="btn-success" onclick="app.exportPDF('whatsapp')">WhatsApp</button>
+        <button class="btn-success" onclick="app.exportPDF('whatsapp')">Invia WhatsApp</button>
     </div>
 
-    <main class="container hidden" id="catalog-wrapper"><div id="main-content"></div></main>
-    <section id="admin-panel" class="container hidden"><div class="card"><table id="admin-table"><thead><tr><th>ID</th><th>Nome</th><th>Azioni</th></tr></thead><tbody id="admin-table-body"></tbody></table></div></section>
+    <main class="container hidden" id="catalog-wrapper">
+        <div id="main-content"></div>
+    </main>
 
-    <div id="login-modal" class="modal"><div class="auth-card"><form onsubmit="app.handleLogin(event)"><input type="text" id="username" placeholder="User" required><input type="password" id="password" placeholder="Pass" required><button type="submit">Accedi</button></form></div></div>
+    <section id="admin-panel" class="container hidden">
+        <div class="card"><table id="admin-table"><thead><tr><th>ID</th><th>Nome</th><th>Azioni</th></tr></thead><tbody id="admin-table-body"></tbody></table></div>
+    </section>
+
+    <div id="login-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
+        <div class="auth-card" style="background:#fff; padding:20px; border-radius:8px;">
+            <form onsubmit="app.handleLogin(event)">
+                <input type="text" id="username" placeholder="User" required><br>
+                <input type="password" id="password" placeholder="Pass" required><br>
+                <button type="submit">Accedi</button>
+            </form>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
