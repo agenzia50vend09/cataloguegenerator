@@ -104,47 +104,53 @@ async exportPDF() {
         const container = document.getElementById('main-content');
         const backup = container.innerHTML;
 
-        // 1. Invece di un unico blocco, creiamo un array di elementi per il PDF
-        const pdfContent = document.createElement('div');
-        
+        // 1. CREIAMO UN CONTENITORE TEMPORANEO PER IL PDF
+        const printContainer = document.createElement('div');
+        printContainer.style.width = '100%';
+        printContainer.style.padding = '20px';
+
+        // 2. AGGIUNGIAMO TUTTI I PRODOTTI
         [...new Set(this.products.map(p => p.brand))].forEach(brand => {
             const section = document.createElement('div');
             section.className = 'pdf-section';
-            // Forza il salto pagina prima di ogni nuova marca se vuoi, o lascia fluido
-            section.style.pageBreakInside = 'avoid'; 
-            
+            section.style.breakInside = 'avoid'; // Forza il blocco intero
             section.appendChild(this.createSectionHeading(brand));
             section.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
-            pdfContent.appendChild(section);
+            printContainer.appendChild(section);
         });
 
-        // 2. Attesa immagini
-        const images = pdfContent.querySelectorAll('img');
+        // 3. ATTESA CARICAMENTO IMMAGINI
+        const images = printContainer.querySelectorAll('img');
         await Promise.all(Array.from(images).map(img => {
             if (img.complete) return Promise.resolve();
             return new Promise(r => { img.onload = img.onerror = r; });
         }));
 
-        // 3. Configurazione
+        // 4. CONFIGURAZIONE PDF
         const opt = {
             margin: 10,
-            filename: 'Catalogo_Pulito.pdf',
+            filename: 'Catalogo_Sweets.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
-                useCORS: true,
-                letterRendering: true
+                useCORS: true, 
+                logging: false,
+                letterRendering: true 
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            // Questa è la chiave per evitare tagli brutti:
-            pagebreak: { mode: 'avoid', avoid: ['.product-card', '.pdf-section'] }
+            // La logica che evita tagli brutti:
+            pagebreak: { 
+                mode: 'avoid', 
+                before: '.section-title', // Forza nuova pagina ai titoli
+                avoid: ['.product-card']  // Non tagliare mai le card
+            }
         };
 
-        // Generazione
-        await html2pdf().set(opt).from(pdfContent).save();
+        // Generazione PDF
+        await html2pdf().set(opt).from(printContainer).save();
 
-        // 4. Ripristino
-        this.render();
+        // 5. RIPRISTINO
+        container.innerHTML = backup;
     }
 
     buildFilterMenus() {
