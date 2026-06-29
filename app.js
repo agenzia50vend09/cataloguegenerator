@@ -20,25 +20,28 @@ class CatalogApp {
             const data = await res.json();
             this.products = data.prodotti || [];
             this.credentials = data.credenziali || [];
-        } catch (e) { this.loadMockData(); }
+        } catch (e) { console.error(e); }
     }
 
     isAdminActive() { return localStorage.getItem('isAdminSession') === 'true'; }
 
     checkAdminSession() {
         const isAuth = this.isAdminActive();
-        document.getElementById('public-nav').classList.toggle('hidden', isAuth);
-        document.getElementById('controls-bar').classList.toggle('hidden', !isAuth);
-        document.getElementById('catalog-wrapper').classList.toggle('hidden', !isAuth || this.activeAdminTab !== 'catalog');
-        document.getElementById('admin-panel').classList.toggle('hidden', !isAuth || this.activeAdminTab !== 'management');
+        // Gestione visibilità base
+        document.getElementById('public-nav').style.display = isAuth ? 'none' : 'block';
+        document.getElementById('controls-bar').style.display = isAuth ? 'flex' : 'none';
+        document.getElementById('catalog-wrapper').style.display = (isAuth && this.activeAdminTab === 'catalog') ? 'block' : 'none';
+        document.getElementById('admin-panel').style.display = (isAuth && this.activeAdminTab === 'management') ? 'block' : 'none';
+        
         if(isAuth && this.activeAdminTab === 'catalog') this.render();
     }
 
     getPhotoUrl(url) {
         if (!url) return '';
+        // Gestione link Drive
         if (url.includes("drive.google.com")) {
             const id = url.split("/d/")[1]?.split("/")[0];
-            return id ? `https://lh3.googleusercontent.com/d/${id}=s400` : url;
+            return id ? `https://lh3.googleusercontent.com/d/${id}` : url;
         }
         return url;
     }
@@ -51,35 +54,32 @@ class CatalogApp {
             localStorage.setItem('isAdminSession', 'true');
             document.getElementById('login-modal').style.display = 'none';
             this.checkAdminSession();
-        } else alert("Errore");
+        } else alert("Credenziali errate");
     }
 
     handleLogout() { localStorage.removeItem('isAdminSession'); location.reload(); }
 
-    switchAdminView(v) { this.activeAdminTab = v; this.checkAdminSession(); }
-
     render() {
         const container = document.getElementById('main-content');
         container.innerHTML = this.products.map(p => `
-            <div class="product-card">
-                <img src="${this.getPhotoUrl(p.foto)}" onerror="this.src=''">
-                <div><strong>${p.brand}</strong><br>${p.nome}<br>${p.prezzo}€</div>
+            <div class="product-card" style="border:1px solid #ccc; margin:10px; padding:10px;">
+                <img src="${this.getPhotoUrl(p.foto)}" style="width:100px; height:100px; object-fit:cover;">
+                <div><strong>${p.brand}</strong><br>${p.nome} - ${p.prezzo}€</div>
             </div>
         `).join('');
     }
 
     buildFilterMenus() {
         ['gum', 'caramella'].forEach(t => {
-            const a = document.createElement('a'); a.innerText = t;
-            a.onclick = () => alert(t);
+            const a = document.createElement('a'); a.innerText = t; a.href = "#";
+            a.onclick = () => alert("Filtro: " + t);
             document.getElementById('dropdown-type').appendChild(a);
         });
     }
 
-    exportPDF(target) {
-        alert("Generazione PDF...");
-        const opt = { margin: 10, filename: 'Catalogo.pdf', html2canvas: { scale: 2 } };
-        html2pdf().set(opt).from(document.getElementById('main-content')).save();
-    }
+    switchAdminView(v) { this.activeAdminTab = v; this.checkAdminSession(); }
+    renderCatalog() { this.activeAdminTab = 'catalog'; this.checkAdminSession(); }
+    toggleAdminModal(s) { document.getElementById('login-modal').style.display = s ? 'flex' : 'none'; }
+    exportPDF(target) { html2pdf().from(document.getElementById('main-content')).save(); }
 }
 const app = new CatalogApp();
