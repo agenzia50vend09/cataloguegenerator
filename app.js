@@ -126,7 +126,7 @@ async exportPDF() {
             },
             jsPDF: { 
                 unit: 'mm', 
-                format: [210, 2000], 
+                format: [210, 5000], 
                 orientation: 'portrait' 
             },
             // 'avoid' su .product-card impedirà il taglio della singola card
