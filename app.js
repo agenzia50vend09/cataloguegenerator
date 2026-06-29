@@ -100,28 +100,44 @@ class CatalogApp {
         return matches ? `https://lh3.googleusercontent.com/d/${matches[1]}=s400` : url;
     }
 
-    async exportPDF() {
+async exportPDF() {
         const container = document.getElementById('main-content');
         const backup = container.innerHTML;
 
+        // 1. ESPANSIONE TOTALE (Tutti i prodotti)
         container.innerHTML = '';
         [...new Set(this.products.map(p => p.brand))].forEach(brand => {
             container.appendChild(this.createSectionHeading(brand));
             container.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
         });
 
-        // Attesa tecnica per immagini
+        // 2. Attesa caricamento immagini
         await new Promise(r => setTimeout(r, 2000));
 
+        // 3. OPZIONI PER FOGLIO CONTINUO
         const opt = {
-            margin: 10, filename: 'Catalogo.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: 'avoid', before: '.section-title' }
+            margin: [10, 10, 10, 10], // Margini ridotti
+            filename: 'Catalogo_Continuo.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                letterRendering: true 
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            },
+            // "avoid" impedisce il taglio all'interno delle card, 
+            // lasciando che il PDF gestisca lo spazio in modo fluido
+            pagebreak: { mode: 'avoid', after: '.grid-products' } 
         };
 
         await html2pdf().set(opt).from(container).save();
+        
+        // 4. Ripristino
         container.innerHTML = backup;
         this.render();
     }
