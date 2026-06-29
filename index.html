@@ -6,8 +6,10 @@
     <title>Catalogo Sweets</title>
     <!-- FontAwesome per le icone -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Collegamento al tuo file CSS esterno -->
+    
+    <!-- NOTA: Se il tuo file si chiama style.css (senza .txt), rinominalo o cambia qui sotto -->
     <link rel="stylesheet" href="style.css.txt">
+    
     <!-- Libreria per l'esportazione in PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -39,7 +41,7 @@
                 <!-- Pulsante pubblico per Login -->
                 <button id="public-nav" class="btn-outline" onclick="app.toggleAdminModal(true)"><i class="fa-solid fa-lock"></i> Area Riservata</button>
                 
-                <!-- Pulsanti di Stato Amministratore (nascosti di base tramite classe 'hidden') -->
+                <!-- Pulsanti di Stato Amministratore -->
                 <button id="admin-btn-view" class="btn-outline hidden" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Catalogo</button>
                 <button id="admin-btn-manage" class="btn-outline hidden" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci</button>
                 <button id="admin-btn-logout" class="btn-danger hidden" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
@@ -59,7 +61,7 @@
         <!-- Form di Aggiunta / Modifica Prodotto -->
         <div class="card">
             <h2 id="form-title" style="margin-bottom: 20px;">Aggiungi Nuovo Prodotto</h2>
-            <form id="product-form" onsubmit="app.handleProductSubmit(e)">
+            <form id="product-form" onsubmit="app.handleProductSubmit(event)">
                 <input type="hidden" id="prod-id">
                 
                 <div class="form-row">
