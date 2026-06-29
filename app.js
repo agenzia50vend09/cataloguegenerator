@@ -171,7 +171,15 @@ checkAdminSession() {
         this.render();
     }
 
-    exportPDF(target) {
+exportPDF(target) {
+        // 1. Salviamo la vista corrente dell'utente per poterla ripristinare dopo
+        const savedView = { ...this.currentView };
+
+        // 2. Forza temporaneamente una vista "Stampa Totale" speciale
+        this.currentView = { type: 'pdf_full', value: null };
+        this.render(); // Rigenera il catalogo mostrando TUTTI i prodotti
+
+        // 3. Configurazione e generazione del PDF sul catalogo completo
         const element = document.getElementById('main-content');
         const elementHeight = element.offsetHeight;
         const reportWidthPx = 1200; 
@@ -185,12 +193,18 @@ checkAdminSession() {
             jsPDF: { unit: 'px', format: [reportWidthPx, reportHeightPx], orientation: 'portrait' }
         };
 
+        const finalizeExport = () => {
+            // Ripristina la vista originale dell'utente (così sullo schermo torna l'anteprima a 3 prodotti)
+            this.currentView = savedView;
+            this.render();
+        };
+
         if (target === 'download') {
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(finalizeExport).catch(finalizeExport);
         } else if (target === 'whatsapp') {
-            html2pdf().set(opt).from(element).save();
-            
-            setTimeout(() => {
+            html2pdf().set(opt).from(element).save().then(() => {
+                finalizeExport();
+                
                 if(!this.adminPhone) {
                     alert("Numero dell'admin non trovato nel database fogli.");
                     return;
@@ -198,7 +212,7 @@ checkAdminSession() {
                 const cleanPhone = this.adminPhone.replace(/\D/g, '');
                 const text = encodeURIComponent("Ciao Admin! Il tuo PDF continuo è pronto ed è stato scaricato sul dispositivo. Trascinalo qui per inviarlo.");
                 window.open(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${text}`, '_blank');
-            }, 1500);
+            }).catch(finalizeExport);
         }
     }
 
