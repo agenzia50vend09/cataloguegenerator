@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogo Sweets</title>
+    <!-- FontAwesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Collegamento al tuo file CSS esterno -->
+    <link rel="stylesheet" href="style.css.txt">
+    <!-- Libreria per l'esportazione in PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <!-- HEADER COMPATTO CON NAVIGAZIONE UNIFICATA -->
+    <header>
+        <div class="container header-container">
+            <div class="logo" onclick="app.renderCatalog()">Sweets</div>
+            
+            <nav id="main-nav">
+                <!-- Filtri Dropdown sempre pronti -->
+                <div class="dropdown">
+                    <button class="dropbtn">Tipologia <i class="fa-solid fa-chevron-down"></i></button>
+                    <div id="dropdown-type" class="dropdown-content"></div>
+                </div>
+                
+                <div class="dropdown">
+                    <button class="dropbtn">Confezione <i class="fa-solid fa-chevron-down"></i></button>
+                    <div id="dropdown-packtype" class="dropdown-content"></div>
+                </div>
+
+                <button class="btn-outline" onclick="app.viewAllProducts()">Mostra Tutti</button>
+
+                <!-- Azioni di esportazione PDF e Condivisione -->
+                <button class="btn-outline" onclick="app.exportPDF('download')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button class="btn-success" onclick="app.exportPDF('whatsapp')"><i class="fa-brands fa-whatsapp"></i> Invia</button>
+
+                <!-- Pulsante pubblico per Login -->
+                <button id="public-nav" class="btn-outline" onclick="app.toggleAdminModal(true)"><i class="fa-solid fa-lock"></i> Area Riservata</button>
+                
+                <!-- Pulsanti di Stato Amministratore (nascosti di base tramite classe 'hidden') -->
+                <button id="admin-btn-view" class="btn-outline hidden" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Catalogo</button>
+                <button id="admin-btn-manage" class="btn-outline hidden" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci</button>
+                <button id="admin-btn-logout" class="btn-danger hidden" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- AREA PRINCIPALE DEL SITO -->
+    <main class="container" id="catalog-wrapper">
+        <div id="main-content">
+            <!-- Qui JavaScript inietterà dinamicamente le griglie dei prodotti e i titoli -->
+        </div>
+    </main>
+
+    <!-- PANNELLO DI GESTIONE PRODOTTI ADMIN (Nascosto di base) -->
+    <section id="admin-panel" class="container hidden" style="margin-top: 30px; margin-bottom: 50px;">
+        <!-- Form di Aggiunta / Modifica Prodotto -->
+        <div class="card">
+            <h2 id="form-title" style="margin-bottom: 20px;">Aggiungi Nuovo Prodotto</h2>
+            <form id="product-form" onsubmit="app.handleProductSubmit(e)">
+                <input type="hidden" id="prod-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prod-brand">Brand / Marca</label>
+                        <input type="text" id="prod-brand" required placeholder="Es. Haribo, Goleador...">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-nome">Nome Prodotto</label>
+                        <input type="text" id="prod-nome" required placeholder="Es. Orsetti d'oro">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prod-descrizione">Descrizione</label>
+                    <textarea id="prod-descrizione" rows="3" placeholder="Inserisci una descrizione dettagliata del prodotto..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prod-prezzo">Prezzo (€)</label>
+                        <input type="number" id="prod-prezzo" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-foto">URL Immagine</label>
+                        <input type="url" id="prod-foto" oninput="app.handleUrlPreview(this.value)" placeholder="Incolla il link dell'immagine (Google Drive, Web...)">
+                    </div>
+                </div>
+
+                <!-- Anteprima dinamica della foto caricata -->
+                <div id="photo-preview-container" class="form-group hidden" style="text-align: center; margin: 15px 0;">
+                    <p style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Anteprima Immagine:</p>
+                    <img id="photo-preview" src="" alt="Anteprima" style="max-height: 120px; object-fit: contain; border: 1px solid var(--border-color); padding: 5px; border-radius: 6px; background: #fff;">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prod-type">Tipologia</label>
+                        <select id="prod-type">
+                            <option value="gum">gum</option>
+                            <option value="caramella">caramella</option>
+                            <option value="lollipop">lollipop</option>
+                            <option value="gommose">gommose</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-packtype">Confezione</label>
+                        <select id="prod-packtype">
+                            <option value="stick">stick</option>
+                            <option value="box">box</option>
+                            <option value="monopezzo">monopezzo</option>
+                            <option value="lollipop">lollipop</option>
+                            <option value="busta">busta</option>
+                            <option value="bottle">bottle</option>
+                            <option value="expo">expo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="checkboxes">
+                    <label><input type="checkbox" id="prod-disponibile" checked> Prodotto Disponibile</label>
+                    <label><input type="checkbox" id="prod-novita"> Imposta come Novità</label>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button type="submit" id="btn-save" class="btn-primary">Salva Prodotto</button>
+                    <button type="button" id="btn-cancel-edit" class="btn-secondary hidden" onclick="app.resetProductForm()">Annulla Modifica</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabella con la lista complessiva dei prodotti in archivio -->
+        <div class="card" style="overflow-x: auto;">
+            <h2 style="margin-bottom: 20px;">Lista Prodotti in Database</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Foto</th>
+                        <th>Brand</th>
+                        <th>Nome</th>
+                        <th>Prezzo</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body">
+                    <!-- Popolata via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- MODAL DI LOGIN (AREA RISERVATA) -->
+    <div id="login-modal" class="modal">
+        <div class="auth-card">
+            <span class="close-btn" onclick="app.toggleAdminModal(false)">&times;</span>
+            <h2 style="margin-bottom: 25px; color: var(--primary-blue); text-align: center;"><i class="fa-solid fa-lock"></i> Login Admin</h2>
+            <form id="login-form" onsubmit="app.handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="Inserisci username">
+                </div>
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Inserisci password">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">Accedi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER AZIENDALE -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Sweets Distribuzione. Tutti i diritti riservati.</p>
+        </div>
+    </footer>
+
+    <!-- Collegamento al tuo file logico JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
