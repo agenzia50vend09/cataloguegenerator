@@ -15,39 +15,37 @@
 </head>
 <body>
 
-    <!-- HEADER COMPATTO CON NAVIGAZIONE UNIFICATA -->
-    <header>
-        <div class="container header-container">
-            <div class="logo" onclick="app.renderCatalog()">Sweets</div>
-            
-            <nav id="main-nav">
-                <!-- Filtri Dropdown sempre pronti -->
-                <div class="dropdown">
-                    <button class="dropbtn">Tipologia <i class="fa-solid fa-chevron-down"></i></button>
-                    <div id="dropdown-type" class="dropdown-content"></div>
-                </div>
-                
-                <div class="dropdown">
-                    <button class="dropbtn">Confezione <i class="fa-solid fa-chevron-down"></i></button>
-                    <div id="dropdown-packtype" class="dropdown-content"></div>
-                </div>
+<!-- HEADER ESSENZIALE -->
+<header>
+    <div class="container header-container">
+        <div class="logo" onclick="app.renderCatalog()">Sweets</div>
+        <nav id="main-nav">
+            <button id="public-nav" class="btn-outline" onclick="app.toggleAdminModal(true)">Area Riservata</button>
+        </nav>
+    </div>
+</header>
 
-                <button class="btn-outline" onclick="app.viewAllProducts()">Mostra Tutti</button>
+<!-- BARRA CONTROLLI (Appare solo dopo login) -->
+<div class="container" id="controls-bar" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+    <button class="btn-outline" onclick="app.renderCatalog()">Catalogo</button>
+    
+    <div class="dropdown">
+        <button class="dropbtn">Tipologia</button>
+        <div id="dropdown-type" class="dropdown-content"></div>
+    </div>
+    
+    <div class="dropdown">
+        <button class="dropbtn">Confezione</button>
+        <div id="dropdown-packtype" class="dropdown-content"></div>
+    </div>
 
-                <!-- Azioni di esportazione PDF e Condivisione -->
-                <button class="btn-outline" onclick="app.exportPDF('download')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button class="btn-success" onclick="app.exportPDF('whatsapp')"><i class="fa-brands fa-whatsapp"></i> Invia</button>
-
-                <!-- Pulsante pubblico per Login -->
-                <button id="public-nav" class="btn-outline" onclick="app.toggleAdminModal(true)"><i class="fa-solid fa-lock"></i> Area Riservata</button>
-                
-                <!-- Pulsanti di Stato Amministratore -->
-                <button id="admin-btn-view" class="btn-outline hidden" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Catalogo</button>
-                <button id="admin-btn-manage" class="btn-outline hidden" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci</button>
-                <button id="admin-btn-logout" class="btn-danger hidden" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
-            </nav>
-        </div>
-    </header>
+    <button id="admin-btn-manage" class="btn-outline hidden" onclick="app.switchAdminView('management')">Gestisci</button>
+    <button id="admin-btn-logout" class="btn-danger hidden" onclick="app.handleLogout()">Esci</button>
+    
+    <!-- Pulsanti PDF spostati qui -->
+    <button class="btn-outline" onclick="app.exportPDF('download')">PDF</button>
+    <button class="btn-success" onclick="app.exportPDF('whatsapp')">Invia WhatsApp</button>
+</div>
 
     <!-- AREA PRINCIPALE DEL SITO -->
     <main class="container" id="catalog-wrapper">
