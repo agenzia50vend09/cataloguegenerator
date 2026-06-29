@@ -104,37 +104,28 @@ async exportPDF() {
         const container = document.getElementById('main-content');
         const backup = container.innerHTML;
 
-        // 1. ESPANSIONE TOTALE
         container.innerHTML = '';
         [...new Set(this.products.map(p => p.brand))].forEach(brand => {
             container.appendChild(this.createSectionHeading(brand));
             container.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
         });
 
-        // 2. Attesa caricamento
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 1000));
 
-        // 3. Configurazione "Continua"
         const opt = {
-            margin: 5, // Margine minimo per massimizzare la continuità
-            filename: 'Catalogo_Continuo.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
+            margin: 10,
+            filename: 'Catalogo.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
             html2canvas: { 
                 scale: 2, 
-                useCORS: true,
-                logging: false 
+                useCORS: true 
             },
-            jsPDF: { 
-                unit: 'mm', 
-                format: [210, 5000], 
-                orientation: 'portrait' 
-            },
-            // 'avoid' su .product-card impedirà il taglio della singola card
-            pagebreak: { mode: 'avoid', avoid: ['.product-card'] }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            // Qui sta la differenza: usiamo 'css' per rispettare le regole @media print
+            pagebreak: { mode: 'css', avoid: ['.product-card', '.section-title'] }
         };
 
         await html2pdf().set(opt).from(container).save();
-        
         container.innerHTML = backup;
         this.render();
     }
