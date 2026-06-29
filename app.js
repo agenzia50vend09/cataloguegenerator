@@ -66,22 +66,29 @@ class CatalogApp {
         return localStorage.getItem('isAdminSession') === 'true';
     }
 
-    checkAdminSession() {
+checkAdminSession() {
         const publicNav = document.getElementById('public-nav');
-        const adminNav = document.getElementById('admin-nav');
+        const btnView = document.getElementById('admin-btn-view');
+        const btnManage = document.getElementById('admin-btn-manage');
+        const btnLogout = document.getElementById('admin-btn-logout');
         const adminPanel = document.getElementById('admin-panel');
         const catalogWrapper = document.getElementById('catalog-wrapper');
 
         if (this.isAdminActive()) {
             if (publicNav) publicNav.classList.add('hidden');
-            if (adminNav) adminNav.classList.remove('hidden');
+            if (btnView) btnView.classList.remove('hidden');
+            if (btnManage) btnManage.classList.remove('hidden');
+            if (btnLogout) btnLogout.classList.remove('hidden');
             this.switchAdminView(this.activeAdminTab);
             this.renderAdminTable();
         } else {
             if (publicNav) publicNav.classList.remove('hidden');
-            if (adminNav) adminNav.classList.add('hidden');
+            if (btnView) btnView.classList.add('hidden');
+            if (btnManage) btnManage.classList.add('hidden');
+            if (btnLogout) btnLogout.classList.add('hidden');
             if (adminPanel) adminPanel.classList.add('hidden');
-            if (catalogWrapper) catalogWrapper.classList.add('hidden');
+            if (catalogWrapper) catalogWrapper.classList.remove('hidden');
+            this.render();
         }
     }
 
