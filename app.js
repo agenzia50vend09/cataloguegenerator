@@ -172,50 +172,96 @@ checkAdminSession() {
     }
 
 exportPDF(target) {
-        // 1. Salviamo la vista corrente dell'utente per poterla ripristinare dopo
-        const savedView = { ...this.currentView };
+        // 1. Crea un'area temporanea nascosta ma visibile al motore PDF per calcolare le altezze
+        const hiddenRenderArea = document.createElement('div');
+        hiddenRenderArea.style.position = 'absolute';
+        hiddenRenderArea.style.left = '-9999px';
+        hiddenRenderArea.style.top = '0';
+        hiddenRenderArea.style.width = '1200px'; // Larghezza fissa del PDF
+        hiddenRenderArea.style.background = '#f8f9fa';
+        document.body.appendChild(hiddenRenderArea);
 
-        // 2. Forza temporaneamente una vista "Stampa Totale" speciale
-        this.currentView = { type: 'pdf_full', value: null };
-        this.render(); // Rigenera il catalogo mostrando TUTTI i prodotti
-
-        // Funzione di chiusura che ripristina la vista a schermo dell'utente
-        const finalizeExport = () => {
-            this.currentView = savedView;
-            this.render();
+        // 2. Generiamo i titoli e TUTTI i prodotti direttamente dentro l'area nascosta
+        const ordinaPerNovita = (lista) => {
+            return [...lista].sort((a, b) => {
+                const aNovita = String(a.novita) === 'true' ? 1 : 0;
+                const bNovita = String(b.novita) === 'true' ? 1 : 0;
+                return bNovita - aNovita;
+            });
         };
 
-        // 3. ASPETTIAMO 500ms: Diamo il tempo al tablet di renderizzare la grafica ed evitare il PDF vuoto
-        setTimeout(() => {
-            const element = document.getElementById('main-content');
-            const elementHeight = element.offsetHeight;
-            const reportWidthPx = 1200; 
-            const reportHeightPx = elementHeight + 100; 
+        // Titolo Novità nel PDF
+        const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
+        if (novitaProducts.length > 0) {
+            const h2 = document.createElement('h2');
+            h2.className = 'section-title';
+            h2.innerText = "✨ Novità In Evidenza";
+            hiddenRenderArea.appendChild(h2);
+            hiddenRenderArea.appendChild(this.createGrid(novitaProducts));
+        }
 
-            const opt = {
-                margin: 10,
-                filename: 'Catalogo_Sweets.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'px', format: [reportWidthPx, reportHeightPx], orientation: 'portrait' }
-            };
+        // Tutti i Brand con TUTTI i prodotti nel PDF
+        const brands = [...new Set(this.products.map(p => p.brand))];
+        brands.forEach(brand => {
+            const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
+            const prodottiOrdinati = ordinaPerNovita(tuttiIProdottiDelBrand);
+            
+            const h2 = document.createElement('h2');
+            h2.className = 'section-title';
+            h2.innerText = `${brand} »`;
+            hiddenRenderArea.appendChild(h2);
+            
+            hiddenRenderArea.appendChild(this.createGrid(prodottiOrdinati));
+        });
 
-            if (target === 'download') {
-                html2pdf().set(opt).from(element).save().then(finalizeExport).catch(finalizeExport);
-            } else if (target === 'whatsapp') {
-                html2pdf().set(opt).from(element).save().then(() => {
-                    finalizeExport();
-                    
-                    if(!this.adminPhone) {
-                        alert("Numero dell'admin non trovato nel database fogli.");
-                        return;
-                    }
-                    const cleanPhone = this.adminPhone.replace(/\D/g, '');
-                    const text = encodeURIComponent("Ciao Admin! Il tuo PDF continuo è pronto ed è stato scaricato sul dispositivo. Trascinalo qui per inviarlo.");
-                    window.open(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${text}`, '_blank');
-                }).catch(finalizeExport);
-            }
-        }, 500); // 500 millisecondi di pausa invisibile per evitare il PDF bianco
+        // 3. Funzione per attendere il caricamento effettivo di tutte le immagini nell'area nascosta
+        const immagini = hiddenRenderArea.querySelectorAll('img');
+        const promises = Array.fromimmagini).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+        });
+
+        // 4. Quando tutto è renderizzato ed è pronto, scatta il PDF
+        Promise.all(promises).then(() => {
+            // Diamo un ulteriore piccolissimo break per il disegno dei vettoriali
+            setTimeout(() => {
+                const elementHeight = hiddenRenderArea.offsetHeight || 2000; // Fallback se 0
+                const reportWidthPx = 1200;
+                const reportHeightPx = elementHeight + 150;
+
+                const opt = {
+                    margin: 15,
+                    filename: 'Catalogo_Sweets.pdf',
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { 
+                        scale: 1.5, 
+                        useCORS: true, 
+                        allowTaint: true,
+                        logging: false 
+                    },
+                    jsPDF: { unit: 'px', format: [reportWidthPx, reportHeightPx], orientation: 'portrait' }
+                };
+
+                const pulisciEChiudi = () => {
+                    document.body.removeChild(hiddenRenderArea);
+                };
+
+                if (target === 'download') {
+                    html2pdf().set(opt).from(hiddenRenderArea).save().then(puliSciEChiudi).catch(puliSciEChiudi);
+                } else if (target === 'whatsapp') {
+                    html2pdf().set(opt).from(hiddenRenderArea).save().then(() => {
+                        puliSciEChiudi();
+                        if(!this.adminPhone) {
+                            alert("Numero dell'admin non trovato.");
+                            return;
+                        }
+                        const cleanPhone = this.adminPhone.replace(/\D/g, '');
+                        const text = encodeURIComponent("Ciao Admin! Il tuo PDF completo con tutti i prodotti è pronto.");
+                        window.open(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${text}`, '_blank');
+                    }).catch(puliSciEChiudi);
+                }
+            }, 400);
+        });
     }
 
     handleUrlPreview(url) {
