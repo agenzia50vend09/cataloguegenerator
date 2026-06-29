@@ -76,7 +76,9 @@ class CatalogApp {
             card.className = 'product-card';
             card.innerHTML = `
                 ${String(p.novita) === 'true' ? '<div class="badge-novita">Novità</div>' : ''}
-                <div class="product-img-container"><img src="${this.getPhotoUrl(p.foto)}" onerror="this.src='data:image/svg+xml,...'"></div>
+                <div class="product-img-container">
+                    <img src="${this.getPhotoUrl(p.foto)}" crossorigin="anonymous" onerror="this.src=''">
+                </div>
                 <div class="product-info">
                     <div class="product-brand">${p.brand}</div>
                     <div class="product-name">${p.nome}</div>
@@ -108,19 +110,20 @@ class CatalogApp {
             container.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
         });
 
-        const images = container.querySelectorAll('img');
-        await Promise.all(Array.from(images).map(img => new Promise(r => { img.onload = img.onerror = r; })));
+        // Attesa tecnica per immagini
+        await new Promise(r => setTimeout(r, 2000));
 
         const opt = {
             margin: 10, filename: 'Catalogo.pdf',
-            image: { type: 'jpeg', quality: 0.9 },
-            html2canvas: { scale: 2, useCORS: true },
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: 'avoid', before: '.section-title' }
         };
 
         await html2pdf().set(opt).from(container).save();
         container.innerHTML = backup;
+        this.render();
     }
 
     buildFilterMenus() {
@@ -128,13 +131,14 @@ class CatalogApp {
         const packs = ['stick', 'box', 'monopezzo', 'lollipop', 'busta', 'bottle', 'expo'];
         const tMenu = document.getElementById('dropdown-type');
         const pMenu = document.getElementById('dropdown-packtype');
-        types.forEach(t => tMenu.innerHTML += `<a href="#" onclick="app.setFilter('type', '${t}')">${t}</a>`);
-        packs.forEach(p => pMenu.innerHTML += `<a href="#" onclick="app.setFilter('packtype', '${p}')">${p}</a>`);
+        if(tMenu) types.forEach(t => tMenu.innerHTML += `<a href="#" onclick="app.setFilter('type', '${t}')">${t}</a>`);
+        if(pMenu) packs.forEach(p => pMenu.innerHTML += `<a href="#" onclick="app.setFilter('packtype', '${p}')">${p}</a>`);
     }
 
     setFilter(t, v) { this.currentView = { type: t, value: v }; this.render(); }
     renderCatalog() { this.currentView.type = 'home'; this.render(); }
     switchAdminView(v) { this.activeAdminTab = v; this.checkAdminSession(); }
+    
     handleLogin(e) {
         e.preventDefault();
         const u = document.getElementById('username').value, p = document.getElementById('password').value;
@@ -144,6 +148,7 @@ class CatalogApp {
             this.checkAdminSession();
         } else alert("Credenziali errate");
     }
+
     handleLogout() { localStorage.removeItem('isAdminSession'); location.reload(); }
     toggleAdminModal(s) { document.getElementById('login-modal').style.display = s ? 'flex' : 'none'; }
 }
