@@ -18,27 +18,36 @@
             <div class="logo" onclick="app.renderCatalog()">
                 <span>Sweets</span>
             </div>
-            <nav id="public-nav">
-                <button id="btn-admin-gate" class="btn-outline" onclick="app.toggleAdminModal(true)">
-                    <i class="fa-solid fa-lock"></i> Admin
-                </button>
-            </nav>
-            <nav id="admin-nav" class="hidden">
-                <button onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-images"></i> Vista Catalogo</button>
-                <button onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestione Prodotti</button>
-                <div class="dropdown view-catalog-el hidden">
-                    <button class="dropbtn">Categorie <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="dropdown-content" id="dropdown-type"></div>
+            <!-- NAVIGAZIONE ADMIN COMPLETA -->
+            <div id="admin-nav" class="hidden">
+                <!-- Pulsanti di Gestione Vista -->
+                <button class="btn-outline" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Vedi Catalogo</button>
+                <button class="btn-outline" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci Prodotti</button>
+    
+                <!-- Menu Dropdown dei Filtri (Incluso per l'Admin) -->
+                <div class="dropdown">
+                    <button class="dropbtn">Tipologia <i class="fa-solid fa-chevron-down"></i></button>
+                    <div id="dropdown-type-admin" class="dropdown-content">
+                        <!-- Popolato dinamicamente da JS -->
+                    </div>
                 </div>
-                <div class="dropdown view-catalog-el hidden">
-                    <button class="dropbtn">Packaging <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="dropdown-content" id="dropdown-packtype"></div>
+    
+                <div class="dropdown">
+                    <button class="dropbtn">Confezione <i class="fa-solid fa-chevron-down"></i></button>
+                    <div id="dropdown-packtype-admin" class="dropdown-content">
+                        <!-- Popolato dinamicamente da JS -->
+                    </div>
                 </div>
-                <button onclick="app.exportPDF('download')" class="btn-primary view-catalog-el hidden"><i class="fa-solid fa-file-pdf"></i> Scarica PDF</button>
-                <button onclick="app.exportPDF('whatsapp')" class="btn-success view-catalog-el hidden"><i class="fa-brands fa-whatsapp"></i> Invia WA</button>
-                <button class="btn-danger" onclick="app.handleLogout()">Logout</button>
-            </nav>
-        </div>
+
+                <button class="btn-outline view-catalog-el" onclick="app.viewAllProducts()">Mostra Tutti</button>
+
+                <!-- Pulsanti Export PDF (Inclusi per l'Admin) -->
+                <button class="btn-outline view-catalog-el" onclick="app.exportPDF('download')"><i class="fa-solid fa-file-pdf"></i> Scarica PDF</button>
+                <button class="btn-success view-catalog-el" onclick="app.exportPDF('whatsapp')"><i class="fa-brands fa-whatsapp"></i> Invia a Admin</button>
+    
+                <!-- Pulsante di Logout -->
+                <button class="btn-danger" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci Admin</button>
+            </div>
     </header>
 
     <main class="container hidden" id="catalog-wrapper">
