@@ -10,7 +10,6 @@ class CatalogApp {
 
     async init() {
         await this.loadData();
-        this.buildFilterMenus();
         this.checkAdminSession();
     }
 
@@ -20,30 +19,35 @@ class CatalogApp {
             const data = await res.json();
             this.products = data.prodotti || [];
             this.credentials = data.credenziali || [];
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Errore dati", e); }
     }
 
     isAdminActive() { return localStorage.getItem('isAdminSession') === 'true'; }
 
     checkAdminSession() {
         const isAuth = this.isAdminActive();
-        // Gestione visibilità base
-        document.getElementById('public-nav').style.display = isAuth ? 'none' : 'block';
-        document.getElementById('controls-bar').style.display = isAuth ? 'flex' : 'none';
-        document.getElementById('catalog-wrapper').style.display = (isAuth && this.activeAdminTab === 'catalog') ? 'block' : 'none';
-        document.getElementById('admin-panel').style.display = (isAuth && this.activeAdminTab === 'management') ? 'block' : 'none';
-        
+        const nav = document.getElementById('public-nav');
+        const bar = document.getElementById('controls-bar');
+        const wrap = document.getElementById('catalog-wrapper');
+        const pan = document.getElementById('admin-panel');
+
+        nav.style.display = isAuth ? 'none' : 'block';
+        bar.style.display = isAuth ? 'flex' : 'none';
+        wrap.style.display = (isAuth && this.activeAdminTab === 'catalog') ? 'block' : 'none';
+        pan.style.display = (isAuth && this.activeAdminTab === 'management') ? 'block' : 'none';
+
         if(isAuth && this.activeAdminTab === 'catalog') this.render();
     }
 
+    // Questa funzione corregge i link Drive per renderli visibili
     getPhotoUrl(url) {
-        if (!url) return '';
-        // Gestione link Drive
-        if (url.includes("drive.google.com")) {
-            const id = url.split("/d/")[1]?.split("/")[0];
-            return id ? `https://lh3.googleusercontent.com/d/${id}` : url;
+        if (!url || url.trim() === "") return 'https://via.placeholder.com/100?text=No+Foto';
+        let u = url.trim();
+        if (u.includes("drive.google.com/file/d/")) {
+            const id = u.split("/d/")[1].split("/")[0];
+            return `https://lh3.googleusercontent.com/d/${id}=s400`;
         }
-        return url;
+        return u;
     }
 
     handleLogin(e) {
@@ -62,24 +66,17 @@ class CatalogApp {
     render() {
         const container = document.getElementById('main-content');
         container.innerHTML = this.products.map(p => `
-            <div class="product-card" style="border:1px solid #ccc; margin:10px; padding:10px;">
-                <img src="${this.getPhotoUrl(p.foto)}" style="width:100px; height:100px; object-fit:cover;">
-                <div><strong>${p.brand}</strong><br>${p.nome} - ${p.prezzo}€</div>
+            <div style="border:1px solid #ddd; margin:10px; padding:10px; display:inline-block; width:150px;">
+                <img src="${this.getPhotoUrl(p.foto)}" style="width:100%; height:100px; object-fit:contain;">
+                <div><strong>${p.brand}</strong><br>${p.nome}<br>${p.prezzo}€</div>
             </div>
         `).join('');
-    }
-
-    buildFilterMenus() {
-        ['gum', 'caramella'].forEach(t => {
-            const a = document.createElement('a'); a.innerText = t; a.href = "#";
-            a.onclick = () => alert("Filtro: " + t);
-            document.getElementById('dropdown-type').appendChild(a);
-        });
     }
 
     switchAdminView(v) { this.activeAdminTab = v; this.checkAdminSession(); }
     renderCatalog() { this.activeAdminTab = 'catalog'; this.checkAdminSession(); }
     toggleAdminModal(s) { document.getElementById('login-modal').style.display = s ? 'flex' : 'none'; }
-    exportPDF(target) { html2pdf().from(document.getElementById('main-content')).save(); }
+    exportPDF() { html2pdf().from(document.getElementById('main-content')).save(); }
 }
+
 const app = new CatalogApp();
