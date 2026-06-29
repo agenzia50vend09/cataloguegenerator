@@ -243,8 +243,7 @@ exportPDF(target) {
         }
         return url;
     }
-
-    render() {
+render() {
         const container = document.getElementById('main-content');
         if (!container) return;
         container.innerHTML = ''; 
@@ -257,18 +256,28 @@ exportPDF(target) {
             });
         };
 
-        if (this.currentView.type === 'home') {
+        // GESTIONE VISTA HOME REGOLARE OPPURE VISTA PDF COMPLETA
+        if (this.currentView.type === 'home' || this.currentView.type === 'pdf_full') {
+            const isPdfMode = this.currentView.type === 'pdf_full';
+
+            // Sezione Novità In Evidenza in alto
             const novitaProducts = this.products.filter(p => String(p.novita) === 'true');
             if (novitaProducts.length > 0) {
                 container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
                 container.appendChild(this.createGrid(novitaProducts));
             }
 
+            // Divisione per Brand
             const brands = [...new Set(this.products.map(p => p.brand))];
             
             brands.forEach(brand => {
                 const tuttiIProdottiDelBrand = this.products.filter(p => p.brand === brand);
-                const brandProducts = ordinaPerNovita(tuttiIProdottiDelBrand).slice(0, 3);
+                
+                // Ordina mettendo le novità del brand per prime
+                const prodottiOrdinati = ordinaPerNovita(tuttiIProdottiDelBrand);
+                
+                // SE SIAMO IN MODALITÀ PDF: Prendi TUTTI i prodotti. SE SIAMO IN HOME: Taglia a 3.
+                const brandProducts = isPdfMode ? prodottiOrdinati : prodottiOrdinati.slice(0, 3);
                 
                 const headingEl = document.createElement('h2');
                 headingEl.className = 'section-title';
@@ -279,6 +288,7 @@ exportPDF(target) {
             });
         } 
         else {
+            // Filtri standard (Categoria, Confezione, Singolo Brand selezionato a schermo)
             let filteredList = [];
             let titleText = "";
             const listaGlobaleOrdinata = ordinaPerNovita(this.products);
