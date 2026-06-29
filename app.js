@@ -138,14 +138,24 @@ class CatalogApp {
         const types = ['gum', 'caramella', 'lollipop', 'gommose'];
         const packtypes = ['stick', 'box', 'monopezzo', 'lollipop', 'busta', 'bottle', 'expo'];
 
+        // Menu Pubblici
         const typeContainer = document.getElementById('dropdown-type');
         if (typeContainer) {
             typeContainer.innerHTML = types.map(t => `<a href="#" onclick="app.setFilter('type', '${t}')">${t}</a>`).join('');
         }
-
         const packContainer = document.getElementById('dropdown-packtype');
         if (packContainer) {
             packContainer.innerHTML = packtypes.map(p => `<a href="#" onclick="app.setFilter('packtype', '${p}')">${p}</a>`).join('');
+        }
+
+        // Menu Admin
+        const typeContainerAdmin = document.getElementById('dropdown-type-admin');
+        if (typeContainerAdmin) {
+            typeContainerAdmin.innerHTML = types.map(t => `<a href="#" onclick="app.setFilter('type', '${t}')">${t}</a>`).join('');
+        }
+        const packContainerAdmin = document.getElementById('dropdown-packtype-admin');
+        if (packContainerAdmin) {
+            packContainerAdmin.innerHTML = packtypes.map(p => `<a href="#" onclick="app.setFilter('packtype', '${p}')">${p}</a>`).join('');
         }
     }
 
