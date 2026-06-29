@@ -123,3 +123,24 @@ body {
         box-shadow: none;
     }
 }
+
+/* Aggiungi questo in fondo al tuo file style.css */
+
+.pdf-section {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 20px;
+}
+
+/* Assicuriamoci che anche le card rispettino il comando */
+.product-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+.section-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+}
+
