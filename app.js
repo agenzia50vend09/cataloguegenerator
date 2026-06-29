@@ -104,29 +104,46 @@ async exportPDF() {
         const container = document.getElementById('main-content');
         const backup = container.innerHTML;
 
-        container.innerHTML = '';
+        // 1. Invece di un unico blocco, creiamo un array di elementi per il PDF
+        const pdfContent = document.createElement('div');
+        
         [...new Set(this.products.map(p => p.brand))].forEach(brand => {
-            container.appendChild(this.createSectionHeading(brand));
-            container.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
+            const section = document.createElement('div');
+            section.className = 'pdf-section';
+            // Forza il salto pagina prima di ogni nuova marca se vuoi, o lascia fluido
+            section.style.pageBreakInside = 'avoid'; 
+            
+            section.appendChild(this.createSectionHeading(brand));
+            section.appendChild(this.createGrid(this.products.filter(p => p.brand === brand)));
+            pdfContent.appendChild(section);
         });
 
-        await new Promise(r => setTimeout(r, 1000));
+        // 2. Attesa immagini
+        const images = pdfContent.querySelectorAll('img');
+        await Promise.all(Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(r => { img.onload = img.onerror = r; });
+        }));
 
+        // 3. Configurazione
         const opt = {
             margin: 10,
-            filename: 'Catalogo.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
+            filename: 'Catalogo_Pulito.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
-                useCORS: true 
+                useCORS: true,
+                letterRendering: true
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            // Qui sta la differenza: usiamo 'css' per rispettare le regole @media print
-            pagebreak: { mode: 'css', avoid: ['.product-card', '.section-title'] }
+            // Questa è la chiave per evitare tagli brutti:
+            pagebreak: { mode: 'avoid', avoid: ['.product-card', '.pdf-section'] }
         };
 
-        await html2pdf().set(opt).from(container).save();
-        container.innerHTML = backup;
+        // Generazione
+        await html2pdf().set(opt).from(pdfContent).save();
+
+        // 4. Ripristino
         this.render();
     }
 
