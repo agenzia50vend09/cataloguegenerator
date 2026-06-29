@@ -293,3 +293,16 @@ table .btn-outline:hover { color: var(--white) !important; background-color: var
         break-inside: auto;
     }
 }
+
+@media print {
+    /* Impedisce al PDF di tagliare a metà le card */
+    .product-card {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    /* Impedisce di lasciare una sezione (titolo) da sola in fondo alla pagina */
+    .section-title {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+    }
+}
