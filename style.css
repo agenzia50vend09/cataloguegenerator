@@ -276,3 +276,7 @@ footer { background-color: var(--dark-blue); color: var(--white); text-align: ce
 }
 table .btn-outline { color: var(--primary-blue) !important; border: 2px solid var(--primary-blue) !important; background-color: transparent !important; }
 table .btn-outline:hover { color: var(--white) !important; background-color: var(--primary-blue) !important; }
+
+.hidden-for-public {
+    display: none !important;
+}
