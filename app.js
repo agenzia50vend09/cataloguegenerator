@@ -5,11 +5,13 @@ class CatalogApp {
         this.products = [];
         this.credentials = [];
         this.activeAdminTab = 'catalog';
+        this.currentView = { type: 'home', value: null };
         this.init();
     }
 
     async init() {
         await this.loadData();
+        this.buildFilterMenus();
         this.checkAdminSession();
     }
 
@@ -19,35 +21,84 @@ class CatalogApp {
             const data = await res.json();
             this.products = data.prodotti || [];
             this.credentials = data.credenziali || [];
-        } catch (e) { console.error("Errore dati", e); }
+        } catch (e) { console.error("Errore caricamento", e); }
     }
 
     isAdminActive() { return localStorage.getItem('isAdminSession') === 'true'; }
 
     checkAdminSession() {
         const isAuth = this.isAdminActive();
-        const nav = document.getElementById('public-nav');
-        const bar = document.getElementById('controls-bar');
-        const wrap = document.getElementById('catalog-wrapper');
-        const pan = document.getElementById('admin-panel');
-
-        nav.style.display = isAuth ? 'none' : 'block';
-        bar.style.display = isAuth ? 'flex' : 'none';
-        wrap.style.display = (isAuth && this.activeAdminTab === 'catalog') ? 'block' : 'none';
-        pan.style.display = (isAuth && this.activeAdminTab === 'management') ? 'block' : 'none';
+        document.getElementById('public-nav').style.display = isAuth ? 'none' : 'block';
+        document.getElementById('controls-bar').style.display = isAuth ? 'flex' : 'none';
+        document.getElementById('catalog-wrapper').style.display = (isAuth && this.activeAdminTab === 'catalog') ? 'block' : 'none';
+        document.getElementById('admin-panel').style.display = (isAuth && this.activeAdminTab === 'management') ? 'block' : 'none';
 
         if(isAuth && this.activeAdminTab === 'catalog') this.render();
     }
 
-    // Questa funzione corregge i link Drive per renderli visibili
+    // --- LOGICA GRAFICA ORIGINALE ---
+    render() {
+        const container = document.getElementById('main-content');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const ordinaPerNovita = (lista) => [...lista].sort((a, b) => (String(b.novita) === 'true') - (String(a.novita) === 'true'));
+
+        if (this.currentView.type === 'home') {
+            const novita = this.products.filter(p => String(p.novita) === 'true');
+            if (novita.length) {
+                container.appendChild(this.createSectionHeading("✨ Novità In Evidenza"));
+                container.appendChild(this.createGrid(novita));
+            }
+            [...new Set(this.products.map(p => p.brand))].forEach(brand => {
+                const prodotti = this.products.filter(p => p.brand === brand);
+                container.appendChild(this.createSectionHeading(brand));
+                container.appendChild(this.createGrid(ordinaPerNovita(prodotti).slice(0, 3)));
+            });
+        } else {
+            container.appendChild(this.createSectionHeading("Catalogo"));
+            container.appendChild(this.createGrid(this.products));
+        }
+    }
+
+    createSectionHeading(text) {
+        const h2 = document.createElement('h2');
+        h2.className = 'section-title';
+        h2.innerText = text;
+        return h2;
+    }
+
+    createGrid(list) {
+        const grid = document.createElement('div');
+        grid.className = 'grid-products';
+        list.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <div class="product-img-container"><img src="${this.getPhotoUrl(prod.foto)}" onerror="this.src='data:image/svg+xml,...'"></div>
+                <div class="product-info">
+                    <div class="product-brand">${prod.brand}</div>
+                    <div class="product-name">${prod.nome}</div>
+                    <div class="product-price">${parseFloat(prod.prezzo || 0).toFixed(2)}€</div>
+                </div>`;
+            grid.appendChild(card);
+        });
+        return grid;
+    }
+
     getPhotoUrl(url) {
-        if (!url || url.trim() === "") return 'https://via.placeholder.com/100?text=No+Foto';
-        let u = url.trim();
-        if (u.includes("drive.google.com/file/d/")) {
-            const id = u.split("/d/")[1].split("/")[0];
+        if (!url) return '';
+        if (url.includes("drive.google.com")) {
+            const id = url.split("/d/")[1]?.split("/")[0];
             return `https://lh3.googleusercontent.com/d/${id}=s400`;
         }
-        return u;
+        return url;
+    }
+
+    // --- FUNZIONI DI CONTROLLO ---
+    exportPDF(target) {
+        const opt = { margin: 10, filename: 'Catalogo.pdf', html2canvas: { scale: 2 } };
+        html2pdf().set(opt).from(document.getElementById('main-content')).save();
     }
 
     handleLogin(e) {
@@ -62,21 +113,10 @@ class CatalogApp {
     }
 
     handleLogout() { localStorage.removeItem('isAdminSession'); location.reload(); }
-
-    render() {
-        const container = document.getElementById('main-content');
-        container.innerHTML = this.products.map(p => `
-            <div style="border:1px solid #ddd; margin:10px; padding:10px; display:inline-block; width:150px;">
-                <img src="${this.getPhotoUrl(p.foto)}" style="width:100%; height:100px; object-fit:contain;">
-                <div><strong>${p.brand}</strong><br>${p.nome}<br>${p.prezzo}€</div>
-            </div>
-        `).join('');
-    }
-
     switchAdminView(v) { this.activeAdminTab = v; this.checkAdminSession(); }
-    renderCatalog() { this.activeAdminTab = 'catalog'; this.checkAdminSession(); }
+    renderCatalog() { this.currentView.type = 'home'; this.activeAdminTab = 'catalog'; this.checkAdminSession(); }
     toggleAdminModal(s) { document.getElementById('login-modal').style.display = s ? 'flex' : 'none'; }
-    exportPDF() { html2pdf().from(document.getElementById('main-content')).save(); }
+    buildFilterMenus() { /* Mantieni la tua logica originale qui */ }
 }
 
 const app = new CatalogApp();
