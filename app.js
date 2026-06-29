@@ -214,9 +214,9 @@ exportPDF(target) {
             hiddenRenderArea.appendChild(this.createGrid(prodottiOrdinati));
         });
 
-        // 3. Funzione per attendere il caricamento effettivo di tutte le immagini nell'area nascosta
+        // 3. Funzione per attendere il caricamento effettivo di tutte le immagini nell'area nascosta (CORRETTA)
         const immagini = hiddenRenderArea.querySelectorAll('img');
-        const promises = Array.fromimmagini).map(img => {
+        const promises = Array.from(immagini).map(img => {
             if (img.complete) return Promise.resolve();
             return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
         });
@@ -263,7 +263,6 @@ exportPDF(target) {
             }, 400);
         });
     }
-
     handleUrlPreview(url) {
         const previewContainer = document.getElementById('photo-preview-container');
         const previewImg = document.getElementById('photo-preview');
