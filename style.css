@@ -144,3 +144,26 @@ body {
     page-break-after: avoid !important;
 }
 
+/* Aggiungi in style.css */
+.pdf-section {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 30px;
+}
+
+/* Questa regola è la più importante per non tagliare le sezioni */
+.section-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+}
+
+/* Assicura che le card non vengano tagliate */
+.product-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    display: inline-block; /* Aiuta il rendering */
+    width: 30%; /* Adatta in base alla tua griglia */
+}
+
+
