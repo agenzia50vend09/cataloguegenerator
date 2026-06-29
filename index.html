@@ -2,8 +2,8 @@
     <div class="container header-container">
         <div class="logo" onclick="app.renderCatalog()">Sweets</div>
         
-        <nav>
-            <!-- FILTRI (Sempre visibili sia a utenti che a admin) -->
+        <nav id="main-nav">
+            <!-- FILTRI -->
             <div class="dropdown">
                 <button class="dropbtn">Tipologia <i class="fa-solid fa-chevron-down"></i></button>
                 <div id="dropdown-type" class="dropdown-content"></div>
@@ -16,21 +16,16 @@
 
             <button class="btn-outline" onclick="app.viewAllProducts()">Mostra Tutti</button>
 
-            <!-- ESPORTAZIONE (Sempre visibile) -->
+            <!-- ESPORTAZIONE -->
             <button class="btn-outline" onclick="app.exportPDF('download')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             <button class="btn-success" onclick="app.exportPDF('whatsapp')"><i class="fa-brands fa-whatsapp"></i> Invia</button>
 
-            <!-- NAVIGAZIONE PUBBLICA (Acceso solo se NON sei admin) -->
-            <div id="public-nav">
-                <button class="btn-outline" onclick="app.toggleAdminModal(true)"><i class="fa-solid fa-lock"></i> Area Riservata</button>
-            </div>
-
-            <!-- NAVIGAZIONE ADMIN (Acceso solo se SEI admin) -->
-            <div id="admin-nav" class="hidden" style="display: flex; gap: 10px; align-items: center;">
-                <button class="btn-outline" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Catalogo</button>
-                <button class="btn-outline" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci</button>
-                <button class="btn-danger" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
-            </div>
+            <!-- PULSANTI DI STATO (Gestiti via ID/Classi pulite) -->
+            <button id="public-nav" class="btn-outline" onclick="app.toggleAdminModal(true)"><i class="fa-solid fa-lock"></i> Area Riservata</button>
+            
+            <button id="admin-btn-view" class="btn-outline hidden" onclick="app.switchAdminView('catalog')"><i class="fa-solid fa-eye"></i> Catalogo</button>
+            <button id="admin-btn-manage" class="btn-outline hidden" onclick="app.switchAdminView('management')"><i class="fa-solid fa-gear"></i> Gestisci</button>
+            <button id="admin-btn-logout" class="btn-danger hidden" onclick="app.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Esci</button>
         </nav>
     </div>
 </header>
