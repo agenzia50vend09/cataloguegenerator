@@ -179,41 +179,43 @@ exportPDF(target) {
         this.currentView = { type: 'pdf_full', value: null };
         this.render(); // Rigenera il catalogo mostrando TUTTI i prodotti
 
-        // 3. Configurazione e generazione del PDF sul catalogo completo
-        const element = document.getElementById('main-content');
-        const elementHeight = element.offsetHeight;
-        const reportWidthPx = 1200; 
-        const reportHeightPx = elementHeight + 100; 
-
-        const opt = {
-            margin: 10,
-            filename: 'Catalogo_Sweets.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'px', format: [reportWidthPx, reportHeightPx], orientation: 'portrait' }
-        };
-
+        // Funzione di chiusura che ripristina la vista a schermo dell'utente
         const finalizeExport = () => {
-            // Ripristina la vista originale dell'utente (così sullo schermo torna l'anteprima a 3 prodotti)
             this.currentView = savedView;
             this.render();
         };
 
-        if (target === 'download') {
-            html2pdf().set(opt).from(element).save().then(finalizeExport).catch(finalizeExport);
-        } else if (target === 'whatsapp') {
-            html2pdf().set(opt).from(element).save().then(() => {
-                finalizeExport();
-                
-                if(!this.adminPhone) {
-                    alert("Numero dell'admin non trovato nel database fogli.");
-                    return;
-                }
-                const cleanPhone = this.adminPhone.replace(/\D/g, '');
-                const text = encodeURIComponent("Ciao Admin! Il tuo PDF continuo è pronto ed è stato scaricato sul dispositivo. Trascinalo qui per inviarlo.");
-                window.open(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${text}`, '_blank');
-            }).catch(finalizeExport);
-        }
+        // 3. ASPETTIAMO 500ms: Diamo il tempo al tablet di renderizzare la grafica ed evitare il PDF vuoto
+        setTimeout(() => {
+            const element = document.getElementById('main-content');
+            const elementHeight = element.offsetHeight;
+            const reportWidthPx = 1200; 
+            const reportHeightPx = elementHeight + 100; 
+
+            const opt = {
+                margin: 10,
+                filename: 'Catalogo_Sweets.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'px', format: [reportWidthPx, reportHeightPx], orientation: 'portrait' }
+            };
+
+            if (target === 'download') {
+                html2pdf().set(opt).from(element).save().then(finalizeExport).catch(finalizeExport);
+            } else if (target === 'whatsapp') {
+                html2pdf().set(opt).from(element).save().then(() => {
+                    finalizeExport();
+                    
+                    if(!this.adminPhone) {
+                        alert("Numero dell'admin non trovato nel database fogli.");
+                        return;
+                    }
+                    const cleanPhone = this.adminPhone.replace(/\D/g, '');
+                    const text = encodeURIComponent("Ciao Admin! Il tuo PDF continuo è pronto ed è stato scaricato sul dispositivo. Trascinalo qui per inviarlo.");
+                    window.open(`https://web.whatsapp.com/send?phone=${cleanPhone}&text=${text}`, '_blank');
+                }).catch(finalizeExport);
+            }
+        }, 500); // 500 millisecondi di pausa invisibile per evitare il PDF bianco
     }
 
     handleUrlPreview(url) {
