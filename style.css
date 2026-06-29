@@ -280,3 +280,16 @@ table .btn-outline:hover { color: var(--white) !important; background-color: var
 .hidden-for-public {
     display: none !important;
 }
+/* Stile per il PDF */
+@media print {
+    .product-card {
+        break-inside: avoid; /* Fondamentale per non spezzare la card */
+        display: inline-block;
+        vertical-align: top;
+    }
+    .grid-products {
+        display: flex;
+        flex-wrap: wrap;
+        break-inside: auto;
+    }
+}
